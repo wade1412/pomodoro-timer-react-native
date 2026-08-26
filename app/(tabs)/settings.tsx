@@ -3,10 +3,10 @@ import { StyleSheet, Text, View } from "react-native";
 
 const { colors, typography } = theme;
 
-export default function FocusScreen() {
+export default function SettingsScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Focus Screen</Text>
+      <Text style={styles.title}>Settings</Text>
       <View style={styles.separator} />
     </View>
   );
