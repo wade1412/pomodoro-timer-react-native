@@ -9,12 +9,15 @@ import "react-native-reanimated";
 const { colors } = theme;
 const navigationTheme = {
   ...DarkTheme,
-  background: colors.background,
-  card: colors.background,
-  text: colors.textPrimary,
-  border: colors.border,
-  primary: colors.focus,
-  notification: colors.focus,
+  colors: {
+    ...DarkTheme.colors,
+    background: colors.background,
+    card: colors.background,
+    text: colors.textPrimary,
+    border: colors.border,
+    primary: colors.focus,
+    notification: colors.focus,
+  },
 };
 
 export {
