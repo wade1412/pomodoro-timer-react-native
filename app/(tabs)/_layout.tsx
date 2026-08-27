@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 import { SymbolView } from "expo-symbols";
 
 import { theme } from "@/constants/theme";
+import { StyleSheet } from "react-native";
 
 const { colors } = theme;
 
@@ -15,7 +16,7 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
-          borderTopWidth: 2,
+          borderTopWidth: StyleSheet.hairlineWidth,
         },
       }}
     >
