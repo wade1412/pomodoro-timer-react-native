@@ -74,7 +74,7 @@ export const theme = {
     },
 
     metric: {
-      fontSize: 28,
+      fontSize: 24,
       lineHeight: 34,
       fontWeight: "500",
     },

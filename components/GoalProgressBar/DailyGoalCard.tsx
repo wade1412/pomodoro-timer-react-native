@@ -5,7 +5,7 @@ import TrackedMetrics from "./TrackedMetrics";
 
 const { colors, typography, spacing, radius } = theme;
 
-export default function GoalProgressBar() {
+export default function DailyGoalCard() {
   return (
     <View style={styles.goalCardContainer}>
       {/* Header: Section Caption and Minutes to Goal */}
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   goalCardHeaderContainer: {
     flexDirection: "row",
@@ -40,7 +40,6 @@ const styles = StyleSheet.create({
   },
   goalMinutes: {
     ...typography.body,
-    fontWeight: "500",
     color: colors.focus,
     letterSpacing: 1.2,
   },
