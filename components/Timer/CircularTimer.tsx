@@ -12,7 +12,7 @@ interface CircularTimerProps {
 
 const { colors, spacing, typography, radius } = theme;
 
-const circleSize = 220;
+const circleSize = 228;
 const circleStrokeWidth = 6;
 const circleRadius = (circleSize - circleStrokeWidth) / 2;
 const circleCircumference = 2 * Math.PI * circleRadius;
@@ -92,8 +92,6 @@ export default function CircularTimer({
 const styles = StyleSheet.create({
   //Timer
   timerArea: {
-    flex: 1,
-    minHeight: 240,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: spacing.lg,
@@ -106,7 +104,7 @@ const styles = StyleSheet.create({
   },
   timerCircle: {
     position: "absolute",
-    width: 200,
+    width: 208,
     aspectRatio: 1,
     backgroundColor: colors.surface,
     borderRadius: radius.round,
@@ -115,8 +113,9 @@ const styles = StyleSheet.create({
   },
   phaseLabel: {
     ...typography.sectionTitle,
-    marginBottom: spacing.xs,
-    letterSpacing: 1.2,
+    fontWeight: 400,
+    marginBottom: spacing.xxs,
+    letterSpacing: 1.6,
   },
   timerText: {
     ...typography.timer,
@@ -126,6 +125,6 @@ const styles = StyleSheet.create({
   timerStatus: {
     ...typography.caption,
     color: colors.textMuted,
-    marginTop: spacing.xs,
+    marginTop: spacing.xxs,
   },
 });

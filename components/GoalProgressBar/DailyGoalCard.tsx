@@ -24,6 +24,7 @@ export default function DailyGoalCard() {
 const styles = StyleSheet.create({
   goalCardContainer: {
     backgroundColor: colors.surface,
+    marginHorizontal: spacing.xs,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.md,
@@ -34,13 +35,12 @@ const styles = StyleSheet.create({
   },
   goalCardTitle: {
     ...typography.body,
-    fontWeight: "500",
-    color: colors.textSecondary,
-    letterSpacing: 1.2,
+    fontWeight: "400",
+    color: colors.textMuted,
+    letterSpacing: 0.8,
   },
   goalMinutes: {
     ...typography.body,
     color: colors.focus,
-    letterSpacing: 1.2,
   },
 });

@@ -2,6 +2,10 @@ import DailyGoalCard from "@/components/GoalProgressBar/DailyGoalCard";
 import CircularTimer from "@/components/Timer/CircularTimer";
 import TimerControls from "@/components/Timer/TimerControls";
 import { theme } from "@/constants/theme";
+import {
+  focusPhaseDuration,
+  shortBreakPhaseDuration,
+} from "@/constants/timer.constants";
 import { TimerPhase, TimerStatus } from "@/constants/types";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -12,6 +16,7 @@ const { colors, typography, spacing, radius } = theme;
 export default function FocusScreen() {
   const [timerPhase, setTimerPhase] = useState<TimerPhase>("break");
   const [timerStatus, setTimerStatus] = useState<TimerStatus>("ready");
+  const [timerDuration, setTimerDuration] = useState(focusPhaseDuration);
 
   const isFocusPhase = timerPhase === "focus";
 
@@ -21,8 +26,14 @@ export default function FocusScreen() {
     day: "numeric",
   });
 
-  const onTimerButtonPress = () => {
+  // Timer Handlers
+  const onStartButtonPress = () => {
     setTimerStatus((prev) => (prev === "running" ? "paused" : "running"));
+  };
+  const onResetButtonPress = () => {
+    setTimerDuration(
+      isFocusPhase ? focusPhaseDuration : shortBreakPhaseDuration,
+    );
   };
 
   const timerButtonText = [
@@ -48,18 +59,22 @@ export default function FocusScreen() {
           <DailyGoalCard />
 
           {/* Timer Area */}
-          <CircularTimer
-            durationSeconds={1500}
-            secondsRemaining={1500}
-            phase={timerPhase}
-            status={timerStatus}
-          />
+          <View style={styles.timerAndActionsContainer}>
+            <CircularTimer
+              durationSeconds={timerDuration}
+              secondsRemaining={timerDuration - 20}
+              phase={timerPhase}
+              status={timerStatus}
+            />
 
-          <TimerControls
-            onPress={onTimerButtonPress}
-            buttonText={timerButtonText}
-            isFocusPhase={isFocusPhase}
-          />
+            <TimerControls
+              status={timerStatus}
+              phase={timerPhase}
+              buttonText={timerButtonText}
+              onStartPress={onStartButtonPress}
+              onReset={onResetButtonPress}
+            />
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -82,10 +97,13 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     maxWidth: 320,
+    gap: spacing.lg,
   },
   header: {
-    gap: spacing.md,
-    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing["3xl"],
+    paddingBottom: spacing.sm,
+    gap: spacing.xs,
   },
   title: {
     ...typography.screenTitle,
@@ -95,5 +113,13 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     letterSpacing: 1.2,
+  },
+  timerAndActionsContainer: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    gap: spacing["2xl"],
   },
 });
