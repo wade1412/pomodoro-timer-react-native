@@ -1,12 +1,13 @@
 import { theme } from "@/constants/theme";
+import { TimerPhase, TimerStatus } from "@/constants/types";
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
 interface CircularTimerProps {
   secondsRemaining: number;
   durationSeconds: number;
-  phase: "focus" | "break";
-  status: "ready" | "running" | "paused";
+  phase: TimerPhase;
+  status: TimerStatus;
 }
 
 const { colors, spacing, typography, radius } = theme;
@@ -36,6 +37,8 @@ export default function CircularTimer({
   const progress = Math.min(Math.max(elapsedSeconds / durationSeconds, 0), 1);
   const strokeDashoffset = circleCircumference * (1 - progress);
 
+  const isFocusPhase = phase === "focus";
+
   return (
     <View style={styles.timerArea}>
       <View style={styles.timerRing}>
@@ -53,7 +56,7 @@ export default function CircularTimer({
             cy={circleSize / 2}
             strokeWidth={circleStrokeWidth}
             r={circleRadius}
-            stroke={colors.focus}
+            stroke={isFocusPhase ? colors.focus : colors.break}
             fill="transparent"
             strokeDasharray={circleCircumference}
             strokeDashoffset={strokeDashoffset}
@@ -62,11 +65,24 @@ export default function CircularTimer({
         </Svg>
 
         <View style={styles.timerCircle}>
-          {/* <Text style={styles.phaseLabel}>FOCUS</Text> */}
+          {status !== "ready" && (
+            <Text
+              style={[
+                styles.phaseLabel,
+                { color: isFocusPhase ? colors.focus : colors.break },
+              ]}
+            >
+              {phase.toUpperCase()}
+            </Text>
+          )}
           <Text style={styles.timerText}>
             {formatSecondsIntoMinutes(secondsRemaining)}
           </Text>
-          {/* <Text style={styles.timerStatus}>in progress</Text> */}
+          {status !== "ready" && (
+            <Text style={styles.timerStatus}>
+              {status === "running" ? "in progress" : "paused"}
+            </Text>
+          )}
         </View>
       </View>
     </View>
@@ -99,7 +115,6 @@ const styles = StyleSheet.create({
   },
   phaseLabel: {
     ...typography.sectionTitle,
-    color: colors.focus,
     marginBottom: spacing.xs,
     letterSpacing: 1.2,
   },
