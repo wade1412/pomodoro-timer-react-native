@@ -1,10 +1,6 @@
 import { theme } from "@/constants/theme";
-import {
-  longBreakPhaseDuration,
-  shortBreakPhaseDuration,
-} from "@/constants/timer.constants";
-import { TimerSession } from "@/constants/types";
-import { useState } from "react";
+import { shortBreakPhaseDuration } from "@/constants/timer.constants";
+import { TimerPhase, TimerSession } from "@/constants/types";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import EndPhaseButton from "./EndPhaseButton";
 
@@ -13,64 +9,158 @@ const { colors, typography, radius, spacing } = theme;
 interface TimerControlsProps {
   timerSession: TimerSession;
   buttonText: string;
-  onStartPress: () => void;
+  toggleSessionRunning: () => void;
+  onTimerReset: () => void;
+  onAddBreakTime: () => void;
+  onBreakComplete: () => void;
+  onNewSessionRound: () => void;
+  onEndSession: () => void;
+}
+
+interface OptionalControlsProps {
+  phase: TimerPhase;
   onReset: () => void;
-  onAddBreakTime: (breakTime: number) => void;
+  breakExtended: boolean;
+  handleAddBreakTime: () => void;
+  handleEndBreak: () => void;
+  onEndSession: () => void;
+}
+
+function CompletedRoundControls({
+  currentRoundNumber,
+  onNewSessionRound,
+  onEndSession,
+}: {
+  currentRoundNumber: number;
+  onNewSessionRound: () => void;
+  onEndSession: () => void;
+}) {
+  return (
+    <View style={styles.buttonContainer}>
+      <Text
+        style={styles.hintText}
+      >{`Round ${currentRoundNumber} complete. Ready for another?`}</Text>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onNewSessionRound}
+        style={({ pressed }) => [
+          styles.timerButton,
+          {
+            backgroundColor: colors.focus,
+          },
+          pressed && {
+            backgroundColor: colors.focusPressed,
+          },
+        ]}
+      >
+        <Text
+          style={styles.timerButtonText}
+        >{`Start Round ${currentRoundNumber + 1}`}</Text>
+      </Pressable>
+
+      <EndPhaseButton
+        onPress={onEndSession}
+        label="End Session"
+        isRoundEnd={true}
+      />
+    </View>
+  );
+}
+
+function OptionalControls({
+  phase,
+  onReset,
+  breakExtended,
+  handleAddBreakTime,
+  handleEndBreak,
+  onEndSession,
+}: OptionalControlsProps) {
+  return (
+    <View style={styles.optionalButtonsContainer}>
+      <View style={styles.buttonsRow}>
+        <Pressable
+          onPress={onReset}
+          style={({ pressed }) => [
+            styles.resetButton,
+            pressed && {
+              borderColor: colors.textMuted,
+            },
+          ]}
+        >
+          {({ pressed }) => (
+            <Text
+              style={[
+                styles.resetButtonText,
+                pressed && {
+                  color: colors.textSecondary,
+                },
+              ]}
+            >
+              Reset Timer
+            </Text>
+          )}
+        </Pressable>
+
+        {/* Add Break Time Button */}
+        {phase !== "focus" && (
+          <Pressable
+            disabled={breakExtended}
+            style={({ pressed }) => [
+              styles.addBreakButton,
+              pressed && { borderColor: colors.breakPressed },
+              breakExtended && {
+                backgroundColor: colors.background,
+                borderColor: colors.breakPressed,
+                borderStyle: "dashed",
+              },
+            ]}
+            onPress={handleAddBreakTime}
+          >
+            {({ pressed }) => (
+              <Text
+                style={[
+                  styles.addBreakButtonText,
+                  pressed && { color: colors.breakPressed },
+                  breakExtended && { color: colors.breakPressed },
+                ]}
+              >{`+${shortBreakPhaseDuration / 60} min`}</Text>
+            )}
+          </Pressable>
+        )}
+      </View>
+
+      {phase !== "focus" ? (
+        <EndPhaseButton label={"End break"} onPress={handleEndBreak} />
+      ) : (
+        <EndPhaseButton label={"End Session"} onPress={onEndSession} />
+      )}
+    </View>
+  );
 }
 
 export default function TimerControls({
   timerSession,
   buttonText,
-  onStartPress,
-  onReset,
+  toggleSessionRunning,
+  onTimerReset,
   onAddBreakTime,
+  onBreakComplete,
+  onNewSessionRound,
+  onEndSession,
 }: TimerControlsProps) {
-  const [hasAddedBreak, setHasAddedBreak] = useState(false);
-
-  const { currentRoundNumber, phase, status } = timerSession;
+  const { currentRoundNumber, phase, status, breakExtended, timerDuration } =
+    timerSession;
 
   const isFocusPhase = phase === "focus";
-  const isLongBreak = currentRoundNumber % 4 === 0;
-  const currentBreakLength = isLongBreak
-    ? shortBreakPhaseDuration
-    : longBreakPhaseDuration;
-
-  const handleAddBreakTime = (breakTime: number) => {
-    onAddBreakTime(breakTime);
-    setHasAddedBreak(true);
-  };
 
   return (
     <>
       {status === "completed" && (
-        <View style={styles.buttonContainer}>
-          <Text
-            style={styles.hintText}
-          >{`Round ${currentRoundNumber} complete. Ready for another?`}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onStartPress}
-            style={({ pressed }) => [
-              styles.timerButton,
-              {
-                backgroundColor: colors.focus,
-              },
-              pressed && {
-                backgroundColor: colors.focusPressed,
-              },
-            ]}
-          >
-            <Text
-              style={styles.timerButtonText}
-            >{`Start Round ${currentRoundNumber + 1}`}</Text>
-          </Pressable>
-
-          <EndPhaseButton
-            onPress={() => {}}
-            label="End Session"
-            isRoundEnd={true}
-          />
-        </View>
+        <CompletedRoundControls
+          currentRoundNumber={currentRoundNumber}
+          onNewSessionRound={onNewSessionRound}
+          onEndSession={onEndSession}
+        />
       )}
 
       {status !== "completed" && (
@@ -78,7 +168,7 @@ export default function TimerControls({
           {/* Start/Pause Button */}
           <Pressable
             accessibilityRole="button"
-            onPress={onStartPress}
+            onPress={toggleSessionRunning}
             style={({ pressed }) => [
               styles.timerButton,
               {
@@ -96,59 +186,14 @@ export default function TimerControls({
 
           {/* Reset Button */}
           {status !== "ready" && (
-            <View style={styles.optionalButtonsContainer}>
-              <View style={styles.buttonsRow}>
-                <Pressable
-                  onPress={onReset}
-                  style={({ pressed }) => [
-                    styles.resetButton,
-                    pressed && {
-                      borderColor: colors.textMuted,
-                    },
-                  ]}
-                >
-                  {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.resetButtonText,
-                        pressed && {
-                          color: colors.textSecondary,
-                        },
-                      ]}
-                    >
-                      Reset Timer
-                    </Text>
-                  )}
-                </Pressable>
-
-                {/* Add Break Time Button */}
-                {phase !== "focus" && !hasAddedBreak && (
-                  <Pressable
-                    disabled={hasAddedBreak}
-                    style={({ pressed }) => [
-                      styles.addBreakButton,
-                      pressed && { borderColor: colors.breakPressed },
-                    ]}
-                    onPress={() => handleAddBreakTime(currentBreakLength)}
-                  >
-                    {({ pressed }) => (
-                      <Text
-                        style={[
-                          styles.addBreakButtonText,
-                          pressed && { color: colors.breakPressed },
-                        ]}
-                      >{`+${shortBreakPhaseDuration / 60} min`}</Text>
-                    )}
-                  </Pressable>
-                )}
-              </View>
-
-              {phase !== "focus" ? (
-                <EndPhaseButton label={"End break"} onPress={() => {}} />
-              ) : (
-                <EndPhaseButton label={"End Session"} onPress={() => {}} />
-              )}
-            </View>
+            <OptionalControls
+              phase={phase}
+              onReset={onTimerReset}
+              breakExtended={breakExtended}
+              handleAddBreakTime={onAddBreakTime}
+              handleEndBreak={onBreakComplete}
+              onEndSession={onEndSession}
+            />
           )}
         </View>
       )}
