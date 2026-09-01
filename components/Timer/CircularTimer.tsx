@@ -1,13 +1,10 @@
 import { theme } from "@/constants/theme";
-import { TimerPhase, TimerStatus } from "@/constants/types";
+import { TimerSession } from "@/constants/types";
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
 interface CircularTimerProps {
-  secondsRemaining: number;
-  durationSeconds: number;
-  phase: TimerPhase;
-  status: TimerStatus;
+  timerSession: TimerSession;
 }
 
 const { colors, spacing, typography, radius } = theme;
@@ -27,17 +24,17 @@ const formatSecondsIntoMinutes = (totalSeconds: number) => {
   return `${paddedMinutes}:${paddedSeconds}`;
 };
 
-export default function CircularTimer({
-  secondsRemaining,
-  durationSeconds,
-  phase,
-  status,
-}: CircularTimerProps) {
-  const elapsedSeconds = durationSeconds - secondsRemaining;
-  const progress = Math.min(Math.max(elapsedSeconds / durationSeconds, 0), 1);
+export default function CircularTimer({ timerSession }: CircularTimerProps) {
+  const { timerDuration, elapsedSeconds, phase, status } = timerSession;
+  const secondsRemaining = timerDuration - elapsedSeconds;
+  const progress = Math.min(Math.max(elapsedSeconds / timerDuration, 0), 1);
   const strokeDashoffset = circleCircumference * (1 - progress);
 
   const isFocusPhase = phase === "focus";
+  const upperCasePhaseName = isFocusPhase
+    ? phase.toUpperCase()
+    : [phase.slice(0, -5), phase.slice(-5)].join(" ").toUpperCase();
+  const shortPhaseName = isFocusPhase ? "Focus" : "Break";
 
   return (
     <View style={styles.timerArea}>
@@ -72,7 +69,7 @@ export default function CircularTimer({
                 { color: isFocusPhase ? colors.focus : colors.break },
               ]}
             >
-              {phase.toUpperCase()}
+              {upperCasePhaseName}
             </Text>
           )}
           <Text style={styles.timerText}>
@@ -80,7 +77,11 @@ export default function CircularTimer({
           </Text>
           {status !== "ready" && (
             <Text style={styles.timerStatus}>
-              {status === "running" ? "in progress" : "paused"}
+              {status === "running"
+                ? "in progress"
+                : status === "completed"
+                  ? `${shortPhaseName} complete`
+                  : "paused"}
             </Text>
           )}
         </View>
