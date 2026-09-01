@@ -1,6 +1,6 @@
 import { focusPhaseDuration } from "./timer.constants";
 
-export type TimerPhase = "focus" | "break";
+export type TimerPhase = "focus" | "shortBreak" | "longBreak";
 
 export type TimerStatus = "ready" | "running" | "paused" | "completed";
 
@@ -10,6 +10,7 @@ export type TimerSession = {
   status: TimerStatus;
   timerDuration: number;
   elapsedSeconds: number;
+  breakExtended: boolean;
   sessionActive: boolean;
 };
 
@@ -19,5 +20,6 @@ export const DEFAULT_TIMER_SESSION: TimerSession = {
   status: "ready",
   timerDuration: focusPhaseDuration,
   elapsedSeconds: 0,
-  sessionActive: true,
+  breakExtended: false,
+  sessionActive: false,
 };

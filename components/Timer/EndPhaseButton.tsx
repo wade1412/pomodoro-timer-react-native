@@ -5,7 +5,7 @@ const { colors, typography, radius, spacing } = theme;
 
 interface EndPhaseButtonProps {
   isRoundEnd?: boolean;
-  label: String;
+  label: string;
   onPress: () => void;
 }
 

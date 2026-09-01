@@ -3,6 +3,7 @@ import CircularTimer from "@/components/Timer/CircularTimer";
 import TimerControls from "@/components/Timer/TimerControls";
 import { theme } from "@/constants/theme";
 import {
+  breakExtensionDuration,
   focusPhaseDuration,
   longBreakPhaseDuration,
   shortBreakPhaseDuration,
@@ -12,16 +13,12 @@ import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { colors, typography, spacing, radius } = theme;
+const { colors, typography, spacing } = theme;
 
 export default function FocusScreen() {
   const [timerSession, setTimerSession] = useState<TimerSession>(
     DEFAULT_TIMER_SESSION,
   );
-
-  const isFocusPhase = timerSession.phase === "focus";
-  const isLongBreak = false;
-
   const formattedDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -29,45 +26,79 @@ export default function FocusScreen() {
   });
 
   // Timer Handlers
-  const onStartButtonPress = () => {
+  const toggleSessionRunning = () => {
     setTimerSession((prev) => ({
       ...prev,
       status: prev.status === "running" ? "paused" : "running",
+      sessionActive: true,
     }));
   };
-  const onResetButtonPress = () => {
+  const onTimerReset = () => {
     setTimerSession((prev) => {
-      const currentPhaseDefaultDuration =
+      const defaultPhaseDuration =
         prev.phase === "focus"
           ? focusPhaseDuration
-          : prev.currentRoundNumber % 4 === 0
+          : prev.phase === "longBreak"
             ? longBreakPhaseDuration
             : shortBreakPhaseDuration;
 
       return {
         ...prev,
+        status: "ready",
+        timerDuration: defaultPhaseDuration,
         elapsedSeconds: 0,
-        timerDuration: currentPhaseDefaultDuration,
+        breakExtended: false,
       };
     });
   };
   const onFocusComplete = () => {
     setTimerSession((prev) => {
       const newCompletedRounds = prev.currentRoundNumber + 1;
+      const isLongBreakNext = newCompletedRounds % 4 === 0;
 
       return {
         ...prev,
-        phase: "break",
-        status: "ready",
         currentRoundNumber: newCompletedRounds,
+        phase: isLongBreakNext ? "longBreak" : "shortBreak",
+        status: "ready",
+        timerDuration: isLongBreakNext
+          ? longBreakPhaseDuration
+          : shortBreakPhaseDuration,
+        elapsedSeconds: 0,
+        breakExtended: false,
       };
     });
   };
-  const onAddBreakTime = (breakTime: number) => {
+
+  const onAddBreakTime = () => {
     setTimerSession((prev) => {
-      const newDuration = prev.timerDuration + breakTime;
-      return { ...prev, timerDuration: newDuration };
+      const newDuration = prev.timerDuration + breakExtensionDuration;
+      return { ...prev, breakExtended: true, timerDuration: newDuration };
     });
+  };
+
+  const onBreakComplete = () => {
+    setTimerSession((prev) => {
+      return { ...prev, status: "completed" };
+    });
+  };
+
+  const onNewSessionRound = () => {
+    setTimerSession((prev) => {
+      return {
+        ...prev,
+        phase: "focus",
+        status: "running",
+        timerDuration: focusPhaseDuration,
+        elapsedSeconds: 0,
+        breakExtended: false,
+        sessionActive: true,
+      };
+    });
+  };
+
+  const onEndSession = () => {
+    setTimerSession(DEFAULT_TIMER_SESSION);
   };
 
   const timerButtonText = [
@@ -94,19 +125,17 @@ export default function FocusScreen() {
 
           {/* Timer Area */}
           <View style={styles.timerAndActionsContainer}>
-            <CircularTimer
-              durationSeconds={timerSession.timerDuration}
-              secondsRemaining={timerSession.timerDuration - 20}
-              phase={timerSession.phase}
-              status={timerSession.status}
-            />
+            <CircularTimer timerSession={timerSession} />
 
             <TimerControls
               timerSession={timerSession}
               buttonText={timerButtonText}
-              onStartPress={onStartButtonPress}
-              onReset={onResetButtonPress}
+              toggleSessionRunning={toggleSessionRunning}
+              onTimerReset={onTimerReset}
               onAddBreakTime={onAddBreakTime}
+              onBreakComplete={onBreakComplete}
+              onNewSessionRound={onNewSessionRound}
+              onEndSession={onEndSession}
             />
           </View>
         </View>
@@ -126,7 +155,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     paddingBottom: spacing.xl,
-    overflowY: "auto",
   },
   contentColumn: {
     flex: 1,
