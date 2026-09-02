@@ -8,18 +8,22 @@ export type TimerSession = {
   currentRoundNumber: number;
   phase: TimerPhase;
   status: TimerStatus;
-  timerDuration: number;
-  elapsedSeconds: number;
+  timerDurationSeconds: number;
+  accumulatedActiveSeconds: number;
   breakExtended: boolean;
   sessionActive: boolean;
+  startedAtSeconds: null | number;
+  endsAtSeconds: null | number;
 };
 
 export const DEFAULT_TIMER_SESSION: TimerSession = {
   currentRoundNumber: 0,
   phase: "focus",
   status: "ready",
-  timerDuration: focusPhaseDuration,
-  elapsedSeconds: 0,
+  timerDurationSeconds: focusPhaseDuration,
+  accumulatedActiveSeconds: 0,
   breakExtended: false,
   sessionActive: false,
+  startedAtSeconds: null,
+  endsAtSeconds: null,
 };
