@@ -9,7 +9,7 @@ import {
   shortBreakPhaseDuration,
 } from "@/constants/timer.constants";
 import { DEFAULT_TIMER_SESSION, TimerSession } from "@/constants/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -19,6 +19,34 @@ export default function FocusScreen() {
   const [timerSession, setTimerSession] = useState<TimerSession>(
     DEFAULT_TIMER_SESSION,
   );
+  const [nowSeconds, setNowSeconds] = useState(Math.floor(Date.now() / 1000));
+
+  useEffect(() => {
+    if (timerSession.status !== "running") return;
+
+    const secondInterval = setInterval(() => {
+      const newSeconds = Math.floor(Date.now() / 1000);
+
+      setNowSeconds(newSeconds);
+    }, 250);
+
+    return () => clearInterval(secondInterval);
+  }, [timerSession.status]);
+
+  useEffect(() => {
+    if (timerSession.status !== "running" || !timerSession.endsAtSeconds)
+      return;
+
+    if (nowSeconds >= timerSession.endsAtSeconds) {
+      timerSession.phase === "focus" ? onFocusComplete() : onBreakEnd();
+    }
+  }, [
+    timerSession.status,
+    timerSession.endsAtSeconds,
+    timerSession.phase,
+    nowSeconds,
+  ]);
+
   const formattedDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -28,6 +56,7 @@ export default function FocusScreen() {
   // Timer Handlers
   const runTimerPhase = () => {
     const dateNowSeconds = Math.floor(Date.now() / 1000);
+    setNowSeconds(dateNowSeconds);
     setTimerSession((prev) => {
       const remainingDuration =
         prev.timerDurationSeconds - prev.accumulatedActiveSeconds;
@@ -107,6 +136,7 @@ export default function FocusScreen() {
 
   const onAddBreakTime = () => {
     const dateNowSeconds = Math.floor(Date.now() / 1000);
+    setNowSeconds(dateNowSeconds);
     setTimerSession((prev) => {
       const newDuration = prev.timerDurationSeconds + breakExtensionDuration;
 
@@ -145,8 +175,9 @@ export default function FocusScreen() {
   };
 
   const onBreakEnd = () => {
+    const dateNowSeconds = Math.floor(Date.now() / 1000);
+    setNowSeconds(dateNowSeconds);
     setTimerSession((prev) => {
-      const dateNowSeconds = Math.floor(Date.now() / 1000);
       // Get accumulated seconds based on timer phase
       const accumulatedSeconds =
         prev.status === "running" && prev.startedAtSeconds
@@ -173,6 +204,7 @@ export default function FocusScreen() {
 
   const onNewSessionRound = () => {
     const dateNowSeconds = Math.floor(Date.now() / 1000);
+    setNowSeconds(dateNowSeconds);
     setTimerSession((prev) => {
       const newSessionEndsAt = dateNowSeconds + focusPhaseDuration;
 
@@ -214,11 +246,15 @@ export default function FocusScreen() {
       accumulatedActiveSeconds,
     } = timerSession;
 
+    if (startedAtSeconds && nowSeconds < startedAtSeconds) {
+      return Math.min(timerDurationSeconds, accumulatedActiveSeconds);
+    }
+
     if (status === "running") {
       if (!startedAtSeconds) return accumulatedActiveSeconds;
       return Math.min(
         timerDurationSeconds,
-        Math.min(
+        Math.max(
           dateNowSeconds - startedAtSeconds + accumulatedActiveSeconds,
           0,
         ),
@@ -227,8 +263,6 @@ export default function FocusScreen() {
 
     return Math.min(timerDurationSeconds, accumulatedActiveSeconds);
   };
-
-  const dateNowSeconds = Math.floor(Date.now() / 1000);
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
@@ -249,7 +283,7 @@ export default function FocusScreen() {
               timerSession={timerSession}
               elapsedSeconds={getEffectiveElapsedSeconds(
                 timerSession,
-                dateNowSeconds,
+                nowSeconds,
               )}
             />
 
