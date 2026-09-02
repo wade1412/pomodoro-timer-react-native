@@ -5,6 +5,7 @@ import Svg, { Circle } from "react-native-svg";
 
 interface CircularTimerProps {
   timerSession: TimerSession;
+  elapsedSeconds: number;
 }
 
 const { colors, spacing, typography, radius } = theme;
@@ -24,10 +25,18 @@ const formatSecondsIntoMinutes = (totalSeconds: number) => {
   return `${paddedMinutes}:${paddedSeconds}`;
 };
 
-export default function CircularTimer({ timerSession }: CircularTimerProps) {
-  const { timerDuration, elapsedSeconds, phase, status } = timerSession;
-  const secondsRemaining = timerDuration - elapsedSeconds;
-  const progress = Math.min(Math.max(elapsedSeconds / timerDuration, 0), 1);
+export default function CircularTimer({
+  timerSession,
+  elapsedSeconds,
+}: CircularTimerProps) {
+  const { timerDurationSeconds, phase, status } = timerSession;
+
+  const secondsRemaining = timerDurationSeconds - elapsedSeconds;
+
+  const progress = Math.min(
+    Math.max(elapsedSeconds / timerDurationSeconds, 0),
+    1,
+  );
   const strokeDashoffset = circleCircumference * (1 - progress);
 
   const isFocusPhase = phase === "focus";

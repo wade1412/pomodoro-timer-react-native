@@ -26,13 +26,42 @@ export default function FocusScreen() {
   });
 
   // Timer Handlers
-  const toggleSessionRunning = () => {
-    setTimerSession((prev) => ({
-      ...prev,
-      status: prev.status === "running" ? "paused" : "running",
-      sessionActive: true,
-    }));
+  const runTimerPhase = () => {
+    const dateNowSeconds = Math.floor(Date.now() / 1000);
+    setTimerSession((prev) => {
+      const remainingDuration =
+        prev.timerDurationSeconds - prev.accumulatedActiveSeconds;
+      const newEndsAt = dateNowSeconds + remainingDuration;
+
+      return {
+        ...prev,
+        startedAtSeconds: dateNowSeconds,
+        endsAtSeconds: newEndsAt,
+        status: "running",
+        sessionActive: true,
+      };
+    });
   };
+
+  const pauseTimerPhase = () => {
+    const dateNowSeconds = Math.floor(Date.now() / 1000);
+    setTimerSession((prev) => {
+      if (prev.status !== "running" || !prev.startedAtSeconds) return prev;
+
+      const newAccumulatedSeconds =
+        prev.accumulatedActiveSeconds +
+        (dateNowSeconds - prev.startedAtSeconds);
+
+      return {
+        ...prev,
+        accumulatedActiveSeconds: newAccumulatedSeconds,
+        status: "paused",
+        startedAtSeconds: null,
+        endsAtSeconds: null,
+      };
+    });
+  };
+
   const onTimerReset = () => {
     setTimerSession((prev) => {
       const defaultPhaseDuration =
@@ -45,54 +74,118 @@ export default function FocusScreen() {
       return {
         ...prev,
         status: "ready",
-        timerDuration: defaultPhaseDuration,
-        elapsedSeconds: 0,
+        timerDurationSeconds: defaultPhaseDuration,
+        accumulatedActiveSeconds: 0,
         breakExtended: false,
+        startedAtSeconds: null,
+        endsAtSeconds: null,
       };
     });
   };
+
   const onFocusComplete = () => {
     setTimerSession((prev) => {
       const newCompletedRounds = prev.currentRoundNumber + 1;
       const isLongBreakNext = newCompletedRounds % 4 === 0;
 
+      // Return next timer phase with "ready"
       return {
         ...prev,
         currentRoundNumber: newCompletedRounds,
         phase: isLongBreakNext ? "longBreak" : "shortBreak",
         status: "ready",
-        timerDuration: isLongBreakNext
+        timerDurationSeconds: isLongBreakNext
           ? longBreakPhaseDuration
           : shortBreakPhaseDuration,
-        elapsedSeconds: 0,
+        accumulatedActiveSeconds: 0,
         breakExtended: false,
+        startedAtSeconds: null,
+        endsAtSeconds: null,
       };
     });
   };
 
   const onAddBreakTime = () => {
+    const dateNowSeconds = Math.floor(Date.now() / 1000);
     setTimerSession((prev) => {
-      const newDuration = prev.timerDuration + breakExtensionDuration;
-      return { ...prev, breakExtended: true, timerDuration: newDuration };
+      const newDuration = prev.timerDurationSeconds + breakExtensionDuration;
+
+      // Calculate new accumulatedActiveSeconds on adding break time while timer running
+      if (prev.status === "running") {
+        if (!prev.startedAtSeconds) {
+          return prev;
+        }
+
+        const currentAccumulatedSeconds =
+          dateNowSeconds - prev.startedAtSeconds;
+
+        const newAccumulatedSeconds =
+          prev.accumulatedActiveSeconds + currentAccumulatedSeconds;
+        const remainingDuration = newDuration - newAccumulatedSeconds;
+        const newEndsAt = dateNowSeconds + remainingDuration;
+
+        // updating startedAt to reconcile timer
+        return {
+          ...prev,
+          startedAtSeconds: dateNowSeconds,
+          accumulatedActiveSeconds: newAccumulatedSeconds,
+          breakExtended: true,
+          timerDurationSeconds: newDuration,
+          endsAtSeconds: newEndsAt,
+        };
+      }
+
+      // When timer is already paused, the accumulated active seconds dont need to be recalculated, since that is handled by the pause handler
+      return {
+        ...prev,
+        breakExtended: true,
+        timerDurationSeconds: newDuration,
+      };
     });
   };
 
-  const onBreakComplete = () => {
+  const onBreakEnd = () => {
     setTimerSession((prev) => {
-      return { ...prev, status: "completed" };
+      const dateNowSeconds = Math.floor(Date.now() / 1000);
+      // Get accumulated seconds based on timer phase
+      const accumulatedSeconds =
+        prev.status === "running" && prev.startedAtSeconds
+          ? dateNowSeconds -
+            prev.startedAtSeconds +
+            prev.accumulatedActiveSeconds
+          : prev.accumulatedActiveSeconds;
+
+      const newAccumulatedSeconds = Math.min(
+        prev.timerDurationSeconds,
+        accumulatedSeconds,
+      );
+
+      return {
+        ...prev,
+        status: "completed",
+        accumulatedActiveSeconds: newAccumulatedSeconds,
+        breakExtended: false,
+        startedAtSeconds: null,
+        endsAtSeconds: null,
+      };
     });
   };
 
   const onNewSessionRound = () => {
+    const dateNowSeconds = Math.floor(Date.now() / 1000);
     setTimerSession((prev) => {
+      const newSessionEndsAt = dateNowSeconds + focusPhaseDuration;
+
       return {
         ...prev,
         phase: "focus",
         status: "running",
-        timerDuration: focusPhaseDuration,
-        elapsedSeconds: 0,
+        timerDurationSeconds: focusPhaseDuration,
+        accumulatedActiveSeconds: 0,
         breakExtended: false,
         sessionActive: true,
+        startedAtSeconds: dateNowSeconds,
+        endsAtSeconds: newSessionEndsAt,
       };
     });
   };
@@ -110,6 +203,33 @@ export default function FocusScreen() {
     timerSession.phase === "focus" ? "Focus" : "Break",
   ].join(" ");
 
+  const getEffectiveElapsedSeconds = (
+    timerSession: TimerSession,
+    dateNowSeconds: number,
+  ): number => {
+    const {
+      status,
+      startedAtSeconds,
+      timerDurationSeconds,
+      accumulatedActiveSeconds,
+    } = timerSession;
+
+    if (status === "running") {
+      if (!startedAtSeconds) return accumulatedActiveSeconds;
+      return Math.min(
+        timerDurationSeconds,
+        Math.min(
+          dateNowSeconds - startedAtSeconds + accumulatedActiveSeconds,
+          0,
+        ),
+      );
+    }
+
+    return Math.min(timerDurationSeconds, accumulatedActiveSeconds);
+  };
+
+  const dateNowSeconds = Math.floor(Date.now() / 1000);
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
       <View style={styles.mainContainer}>
@@ -125,15 +245,22 @@ export default function FocusScreen() {
 
           {/* Timer Area */}
           <View style={styles.timerAndActionsContainer}>
-            <CircularTimer timerSession={timerSession} />
+            <CircularTimer
+              timerSession={timerSession}
+              elapsedSeconds={getEffectiveElapsedSeconds(
+                timerSession,
+                dateNowSeconds,
+              )}
+            />
 
             <TimerControls
               timerSession={timerSession}
               buttonText={timerButtonText}
-              toggleSessionRunning={toggleSessionRunning}
+              onRunTimerPhase={runTimerPhase}
+              onPauseTimerPhase={pauseTimerPhase}
               onTimerReset={onTimerReset}
               onAddBreakTime={onAddBreakTime}
-              onBreakComplete={onBreakComplete}
+              onBreakComplete={onBreakEnd}
               onNewSessionRound={onNewSessionRound}
               onEndSession={onEndSession}
             />

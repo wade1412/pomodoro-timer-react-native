@@ -9,7 +9,8 @@ const { colors, typography, radius, spacing } = theme;
 interface TimerControlsProps {
   timerSession: TimerSession;
   buttonText: string;
-  toggleSessionRunning: () => void;
+  onRunTimerPhase: () => void;
+  onPauseTimerPhase: () => void;
   onTimerReset: () => void;
   onAddBreakTime: () => void;
   onBreakComplete: () => void;
@@ -141,15 +142,21 @@ function OptionalControls({
 export default function TimerControls({
   timerSession,
   buttonText,
-  toggleSessionRunning,
+  onRunTimerPhase,
+  onPauseTimerPhase,
   onTimerReset,
   onAddBreakTime,
   onBreakComplete,
   onNewSessionRound,
   onEndSession,
 }: TimerControlsProps) {
-  const { currentRoundNumber, phase, status, breakExtended, timerDuration } =
-    timerSession;
+  const {
+    currentRoundNumber,
+    phase,
+    status,
+    breakExtended,
+    timerDurationSeconds,
+  } = timerSession;
 
   const isFocusPhase = phase === "focus";
 
@@ -168,7 +175,11 @@ export default function TimerControls({
           {/* Start/Pause Button */}
           <Pressable
             accessibilityRole="button"
-            onPress={toggleSessionRunning}
+            onPress={
+              status === "ready" || status === "paused"
+                ? onRunTimerPhase
+                : onPauseTimerPhase
+            }
             style={({ pressed }) => [
               styles.timerButton,
               {
