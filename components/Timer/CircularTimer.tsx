@@ -71,7 +71,7 @@ export default function CircularTimer({
         </Svg>
 
         <View style={styles.timerCircle}>
-          {status !== "ready" && (
+          {status !== "ready" && status !== "completed" && (
             <Text
               style={[
                 styles.phaseLabel,
