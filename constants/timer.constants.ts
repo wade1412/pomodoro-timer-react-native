@@ -1,6 +1,6 @@
-export const focusPhaseDuration = 1500;
+export const focusPhaseDuration = 10;
 
-export const shortBreakPhaseDuration = 300;
+export const shortBreakPhaseDuration = 10;
 
 export const longBreakPhaseDuration = 900;
 

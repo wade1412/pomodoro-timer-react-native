@@ -1,5 +1,5 @@
 import { theme } from "@/constants/theme";
-import { shortBreakPhaseDuration } from "@/constants/timer.constants";
+import { breakExtensionDuration } from "@/constants/timer.constants";
 import { TimerPhase, TimerSession } from "@/constants/types";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import EndPhaseButton from "./EndPhaseButton";
@@ -124,7 +124,7 @@ function OptionalControls({
                   pressed && { color: colors.breakPressed },
                   breakExtended && { color: colors.breakPressed },
                 ]}
-              >{`+${shortBreakPhaseDuration / 60} min`}</Text>
+              >{`+${breakExtensionDuration / 60} min`}</Text>
             )}
           </Pressable>
         )}
