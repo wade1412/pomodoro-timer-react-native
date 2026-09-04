@@ -7,10 +7,12 @@ import {
 import { DEFAULT_TIMER_SESSION, PomodoroState } from "@/constants/types";
 import {
   ACTION_LABELS,
+  getReconciledElapsedSeconds,
   ReducerAction,
   validateReducerAction,
   validateTimerStatus,
 } from "@/state/reducer.helpers";
+import { getEffectiveElapsedSeconds } from "@/utils/timer";
 
 export function reducer(
   state: PomodoroState,
@@ -57,9 +59,10 @@ export function reducer(
         return state;
       }
 
-      const newAccumulatedSeconds =
-        state.timerSession.accumulatedActiveSeconds +
-        (action.nowSeconds - state.timerSession.startedAtSeconds);
+      const newAccumulatedSeconds = getReconciledElapsedSeconds(
+        state.timerSession,
+        action.nowSeconds,
+      );
 
       return {
         ...state,
@@ -92,7 +95,7 @@ export function reducer(
       // Calculate accumulated seconds for running status; for paused get it from the state
       const newAccumulatedSeconds =
         isRunning && state.timerSession.startedAtSeconds !== null
-          ? action.nowSeconds - state.timerSession.startedAtSeconds
+          ? getEffectiveElapsedSeconds(state.timerSession, action.nowSeconds)
           : state.timerSession.accumulatedActiveSeconds;
 
       const newTrackedValues = isFocusPhase
@@ -137,12 +140,11 @@ export function reducer(
           return state;
         }
 
-        const currentAccumulatedSeconds =
-          action.nowSeconds - state.timerSession.startedAtSeconds;
+        const newAccumulatedSeconds = getReconciledElapsedSeconds(
+          state.timerSession,
+          action.nowSeconds,
+        );
 
-        const newAccumulatedSeconds =
-          state.timerSession.accumulatedActiveSeconds +
-          currentAccumulatedSeconds;
         const remainingDuration = newDuration - newAccumulatedSeconds;
         const newEndsAt = action.nowSeconds + remainingDuration;
 
@@ -218,18 +220,9 @@ export function reducer(
       }
 
       // Calculate new accumulatedSeconds if its running, get from state if its paused
-      const accumulatedSeconds =
-        state.timerSession.status === "running" &&
-        state.timerSession.startedAtSeconds
-          ? action.nowSeconds -
-            state.timerSession.startedAtSeconds +
-            state.timerSession.accumulatedActiveSeconds
-          : state.timerSession.accumulatedActiveSeconds;
-
-      // Floor it with duration
-      const newAccumulatedSeconds = Math.min(
-        state.timerSession.timerDurationSeconds,
-        accumulatedSeconds,
+      const newAccumulatedSeconds = getReconciledElapsedSeconds(
+        state.timerSession,
+        action.nowSeconds,
       );
 
       const newTrackedBreakSeconds =
@@ -291,13 +284,10 @@ export function reducer(
       const isFocusPhase = state.timerSession.phase === "focus";
 
       // Calculate new accumulated seconds on running, get it from state on paused
-      const newAccumulatedSeconds =
-        state.timerSession.status === "running" &&
-        state.timerSession.startedAtSeconds
-          ? action.nowSeconds -
-            state.timerSession.startedAtSeconds +
-            state.timerSession.accumulatedActiveSeconds
-          : state.timerSession.accumulatedActiveSeconds;
+      const newAccumulatedSeconds = getReconciledElapsedSeconds(
+        state.timerSession,
+        action.nowSeconds,
+      );
 
       // On completed status return previous tracked valued to avoid duplicate tracking
       const newTrackedValues =

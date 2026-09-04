@@ -1,3 +1,4 @@
+import { getEffectiveElapsedSeconds } from "@/utils/timer";
 import { TimerPhase, TimerSession, TimerStatus } from "../constants/types";
 
 export const ACTION_LABELS = {
@@ -126,13 +127,17 @@ export const validateTimerStatus = (timerSession: TimerSession) => {
     }
 
     case "paused": {
-      if (!hasNeither || !isAccumulatedSecondsValid) {
+      if (
+        !hasNeither ||
+        !isAccumulatedSecondsValid ||
+        timerSession.accumulatedActiveSeconds > timerDurationSeconds
+      ) {
         return false;
       } else return true;
     }
 
     case "completed": {
-      if (!hasNeither) {
+      if (!hasNeither || !isAccumulatedSecondsValid) {
         return false;
       } else return true;
     }
@@ -159,4 +164,16 @@ export const validateReducerAction = (
   }
 
   return false;
+};
+
+export const getReconciledElapsedSeconds = (
+  timerSession: TimerSession,
+  nowSeconds: number,
+) => {
+  const newAccumulated =
+    timerSession.status === "running" && timerSession.startedAtSeconds
+      ? getEffectiveElapsedSeconds(timerSession, nowSeconds)
+      : timerSession.accumulatedActiveSeconds;
+
+  return Math.min(newAccumulated, timerSession.timerDurationSeconds);
 };
