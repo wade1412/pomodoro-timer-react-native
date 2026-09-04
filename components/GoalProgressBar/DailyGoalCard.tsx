@@ -1,7 +1,6 @@
 import { theme } from "@/constants/theme";
 import { dailyGoalSecondsExample } from "@/constants/timer.constants";
 import { PomodoroState } from "@/constants/types";
-import { getEffectiveElapsedSeconds } from "@/utils/timer";
 import { StyleSheet, Text, View } from "react-native";
 import TrackedMetrics from "./TrackedMetrics";
 
@@ -9,29 +8,31 @@ const { colors, typography, spacing, radius } = theme;
 
 interface DailyGoalCardProps {
   state: PomodoroState;
+  elapsedSeconds: number;
 }
 
-export default function DailyGoalCard({ state }: DailyGoalCardProps) {
+export default function DailyGoalCard({
+  state,
+  elapsedSeconds,
+}: DailyGoalCardProps) {
   const { trackedValues, timerSession } = state;
   const { breakSeconds, completedRounds, focusSeconds } = trackedValues;
 
-  const dateNowSeconds = Math.floor(Date.now() / 1000);
-
   const totalFocusSeconds =
     timerSession.phase === "focus" && timerSession.status !== "completed"
-      ? focusSeconds + getEffectiveElapsedSeconds(timerSession, dateNowSeconds)
+      ? focusSeconds + elapsedSeconds
       : focusSeconds;
   const displayFocusMinutes = Math.floor(totalFocusSeconds / 60);
 
   const totalBreakSeconds =
     timerSession.phase !== "focus" && timerSession.status !== "completed"
-      ? breakSeconds + getEffectiveElapsedSeconds(timerSession, dateNowSeconds)
+      ? breakSeconds + elapsedSeconds
       : breakSeconds;
   const displayBreakMinutes = Math.floor(totalBreakSeconds / 60);
 
-  const progress = Math.min(
-    (totalFocusSeconds / dailyGoalSecondsExample) * 100,
-    100,
+  const progress = Math.max(
+    0,
+    Math.min(totalFocusSeconds / dailyGoalSecondsExample, 1),
   );
 
   return (
@@ -41,11 +42,13 @@ export default function DailyGoalCard({ state }: DailyGoalCardProps) {
         <Text style={styles.goalCardTitle}>DAILY GOAL</Text>
         <Text
           style={styles.goalMinutes}
-        >{`${displayFocusMinutes}/${dailyGoalSecondsExample / 60} min`}</Text>
+        >{`${displayFocusMinutes}/${Math.floor(dailyGoalSecondsExample / 60)} min`}</Text>
       </View>
 
       <View style={styles.progressBar}>
-        <View style={[styles.progressBarFill, { width: progress }]}></View>
+        <View
+          style={[styles.progressBarFill, { width: `${progress * 100}%` }]}
+        ></View>
       </View>
 
       <TrackedMetrics

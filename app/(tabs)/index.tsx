@@ -117,6 +117,11 @@ export default function FocusScreen() {
     state.timerSession.phase === "focus" ? "Focus" : "Break",
   ].join(" ");
 
+  const effectiveElapsedSeconds = getEffectiveElapsedSeconds(
+    state.timerSession,
+    nowSeconds,
+  );
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
       <View style={styles.mainContainer}>
@@ -129,16 +134,16 @@ export default function FocusScreen() {
           </View>
 
           {/* Tracking Area */}
-          <DailyGoalCard state={state} />
+          <DailyGoalCard
+            state={state}
+            elapsedSeconds={effectiveElapsedSeconds}
+          />
 
           {/* Timer Area */}
           <View style={styles.timerAndActionsContainer}>
             <CircularTimer
               timerSession={state.timerSession}
-              elapsedSeconds={getEffectiveElapsedSeconds(
-                state.timerSession,
-                nowSeconds,
-              )}
+              elapsedSeconds={effectiveElapsedSeconds}
             />
 
             <TimerControls
