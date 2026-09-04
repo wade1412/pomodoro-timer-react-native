@@ -19,9 +19,9 @@ export type ReducerAction =
   | { type: typeof ACTION_LABELS.extendBreak; nowSeconds: number }
   | { type: typeof ACTION_LABELS.endBreak; nowSeconds: number }
   | { type: typeof ACTION_LABELS.newSessionRound; nowSeconds: number }
+  | { type: typeof ACTION_LABELS.endSession; nowSeconds: number }
   | { type: typeof ACTION_LABELS.completeFocus } // No nowSeconds needed
-  | { type: typeof ACTION_LABELS.endSession } // No nowSeconds needed
-  | { type: typeof ACTION_LABELS.resetTimer }; // No nowSeconds needed
+  | { type: typeof ACTION_LABELS.resetTimer; nowSeconds: number };
 
 type reducerActionValidValues = {
   allowedStatuses: TimerStatus[];
@@ -77,7 +77,7 @@ const reducerActionsAllowedValuesMap: Map<
   [
     ACTION_LABELS.endSession,
     {
-      allowedStatuses: ["running", "paused", "completed"],
+      allowedStatuses: ["running", "paused", "completed", "ready"],
       allowedPhases: ["focus", "shortBreak", "longBreak"],
     },
   ],
@@ -118,7 +118,7 @@ export const validateTimerStatus = (timerSession: TimerSession) => {
     case "running": {
       if (
         !hasBoth ||
-        endsAtSeconds > startedAtSeconds ||
+        endsAtSeconds < startedAtSeconds ||
         !isAccumulatedSecondsValid
       ) {
         return false;

@@ -81,15 +81,34 @@ export function reducer(
         return state;
       }
 
-      const defaultPhaseDuration =
-        state.timerSession.phase === "focus"
-          ? focusPhaseDuration
-          : state.timerSession.phase === "longBreak"
-            ? longBreakPhaseDuration
-            : shortBreakPhaseDuration;
+      const isRunning = state.timerSession.status === "running";
+      const isFocusPhase = state.timerSession.phase === "focus";
+      const defaultPhaseDuration = isFocusPhase
+        ? focusPhaseDuration
+        : state.timerSession.phase === "longBreak"
+          ? longBreakPhaseDuration
+          : shortBreakPhaseDuration;
+
+      // Calculate accumulated seconds for running status; for paused get it from the state
+      const newAccumulatedSeconds =
+        isRunning && state.timerSession.startedAtSeconds !== null
+          ? action.nowSeconds - state.timerSession.startedAtSeconds
+          : state.timerSession.accumulatedActiveSeconds;
+
+      const newTrackedValues = isFocusPhase
+        ? {
+            ...state.trackedValues,
+            focusSeconds:
+              state.trackedValues.focusSeconds + newAccumulatedSeconds,
+          }
+        : {
+            ...state.trackedValues,
+            breakSeconds:
+              state.trackedValues.breakSeconds + newAccumulatedSeconds,
+          };
 
       return {
-        ...state,
+        trackedValues: newTrackedValues,
         timerSession: {
           ...state.timerSession,
           status: "ready",
@@ -162,9 +181,18 @@ export function reducer(
       const newCompletedRounds = state.timerSession.currentRoundNumber + 1;
       const isLongBreakNext = newCompletedRounds % 4 === 0;
 
+      const newCompletedTrackedRounds = state.trackedValues.completedRounds + 1;
+      const newTrackedFocusSeconds =
+        state.trackedValues.focusSeconds +
+        state.timerSession.timerDurationSeconds;
+
       // Return next timer phase with "ready"
       return {
-        ...state,
+        trackedValues: {
+          ...state.trackedValues,
+          completedRounds: newCompletedTrackedRounds,
+          focusSeconds: newTrackedFocusSeconds,
+        },
         timerSession: {
           ...state.timerSession,
           currentRoundNumber: newCompletedRounds,
@@ -189,6 +217,7 @@ export function reducer(
         return state;
       }
 
+      // Calculate new accumulatedSeconds if its running, get from state if its paused
       const accumulatedSeconds =
         state.timerSession.status === "running" &&
         state.timerSession.startedAtSeconds
@@ -197,13 +226,20 @@ export function reducer(
             state.timerSession.accumulatedActiveSeconds
           : state.timerSession.accumulatedActiveSeconds;
 
+      // Floor it with duration
       const newAccumulatedSeconds = Math.min(
         state.timerSession.timerDurationSeconds,
         accumulatedSeconds,
       );
 
+      const newTrackedBreakSeconds =
+        state.trackedValues.breakSeconds + newAccumulatedSeconds;
+
       return {
-        ...state,
+        trackedValues: {
+          ...state.trackedValues,
+          breakSeconds: newTrackedBreakSeconds,
+        },
         timerSession: {
           ...state.timerSession,
           status: "completed",
@@ -245,8 +281,42 @@ export function reducer(
     }
 
     case ACTION_LABELS.endSession:
+      if (
+        !validateTimerStatus(state.timerSession) ||
+        !validateReducerAction(state.timerSession, ACTION_LABELS.endSession)
+      ) {
+        return state;
+      }
+
+      const isFocusPhase = state.timerSession.phase === "focus";
+
+      // Calculate new accumulated seconds on running, get it from state on paused
+      const newAccumulatedSeconds =
+        state.timerSession.status === "running" &&
+        state.timerSession.startedAtSeconds
+          ? action.nowSeconds -
+            state.timerSession.startedAtSeconds +
+            state.timerSession.accumulatedActiveSeconds
+          : state.timerSession.accumulatedActiveSeconds;
+
+      // On completed status return previous tracked valued to avoid duplicate tracking
+      const newTrackedValues =
+        state.timerSession.status === "completed"
+          ? { ...state.trackedValues }
+          : isFocusPhase
+            ? {
+                ...state.trackedValues,
+                focusSeconds:
+                  state.trackedValues.focusSeconds + newAccumulatedSeconds,
+              }
+            : {
+                ...state.trackedValues,
+                breakSeconds:
+                  state.trackedValues.breakSeconds + newAccumulatedSeconds,
+              };
+
       return {
-        ...state,
+        trackedValues: newTrackedValues,
         timerSession: DEFAULT_TIMER_SESSION,
       };
 

@@ -2,27 +2,37 @@ import { theme } from "@/constants/theme";
 import { StyleSheet, Text, View } from "react-native";
 import VerticalDivider from "../shared/VerticalDivider";
 
-const { colors, spacing, typography } = theme;
+const { colors, typography } = theme;
 
-export default function TrackedMetrics() {
+interface TrackedMetricsProps {
+  rounds: number;
+  focusMinutes: number;
+  breakMinutes: number;
+}
+
+export default function TrackedMetrics({
+  rounds,
+  focusMinutes,
+  breakMinutes,
+}: TrackedMetricsProps) {
   return (
     <View style={styles.trackingContainer}>
       <View style={styles.trackingCell}>
-        <Text style={styles.trackingRoundsNumber}>0</Text>
+        <Text style={styles.trackingRoundsNumber}>{rounds}</Text>
         <Text style={styles.baseText}>rounds</Text>
       </View>
 
       <VerticalDivider />
 
       <View style={styles.trackingCell}>
-        <Text style={styles.trackingFocusNumber}>10</Text>
+        <Text style={styles.trackingFocusNumber}>{focusMinutes}</Text>
         <Text style={styles.baseText}>focus min</Text>
       </View>
 
       <VerticalDivider />
 
       <View style={styles.trackingCell}>
-        <Text style={styles.trackingBreakNumber}>5</Text>
+        <Text style={styles.trackingBreakNumber}>{breakMinutes}</Text>
         <Text style={styles.baseText}>break min</Text>
       </View>
     </View>

@@ -70,7 +70,9 @@ export default function FocusScreen() {
   };
 
   const onTimerReset = () => {
-    dispatch({ type: ACTION_LABELS.resetTimer });
+    const dateNowSeconds = Math.floor(Date.now() / 1000);
+
+    dispatch({ type: ACTION_LABELS.resetTimer, nowSeconds: dateNowSeconds });
   };
 
   const onFocusComplete = () => {
@@ -102,7 +104,8 @@ export default function FocusScreen() {
   };
 
   const onEndSession = () => {
-    dispatch({ type: ACTION_LABELS.endSession });
+    const dateNowSeconds = Math.floor(Date.now() / 1000);
+    dispatch({ type: ACTION_LABELS.endSession, nowSeconds: dateNowSeconds });
   };
 
   const timerButtonText = [
@@ -125,7 +128,8 @@ export default function FocusScreen() {
             <Text style={styles.date}>{formattedDate}</Text>
           </View>
 
-          <DailyGoalCard />
+          {/* Tracking Area */}
+          <DailyGoalCard state={state} />
 
           {/* Timer Area */}
           <View style={styles.timerAndActionsContainer}>
