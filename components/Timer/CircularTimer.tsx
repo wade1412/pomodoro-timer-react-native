@@ -1,10 +1,13 @@
 import { theme } from "@/constants/theme";
 import { TimerSession } from "@/constants/types";
 import { useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Easing, StyleSheet, Text, View } from "react-native";
 import Animated, {
+  cancelAnimation,
   useAnimatedProps,
+  useAnimatedStyle,
   useSharedValue,
+  withRepeat,
   withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
@@ -39,6 +42,7 @@ export default function CircularTimer({
   const { timerDurationSeconds, phase, status } = timerSession;
 
   const isFocusPhase = phase === "focus";
+  const phaseColor = isFocusPhase ? colors.focus : colors.break;
   const upperCasePhaseName = isFocusPhase
     ? phase.toUpperCase()
     : [phase.slice(0, -5), phase.slice(-5)].join(" ").toUpperCase();
@@ -46,28 +50,84 @@ export default function CircularTimer({
 
   const secondsRemaining = timerDurationSeconds - elapsedSeconds;
 
+  // ----- Animations -----
+  // Progress Animation
   const progress = Math.min(
     Math.max(elapsedSeconds / timerDurationSeconds, 0),
     1,
   );
-
   const animatedProgress = useSharedValue(progress);
-
   useEffect(() => {
     animatedProgress.value = withTiming(progress, {
       duration: 300,
     });
   }, [progress]);
-
   const animatedProps = useAnimatedProps(() => {
     return {
       strokeDashoffset: circleCircumference * (1 - animatedProgress.value),
     };
   });
+  // Pulse Animation
+  const pulseAnimationProgress = useSharedValue(0);
+  const pulseAnimationDuration = 1800;
+  const pulseAnimationStopDuration = 250;
+  useEffect(() => {
+    if (status === "running") {
+      pulseAnimationProgress.value = withRepeat(
+        withTiming(1, {
+          duration: pulseAnimationDuration,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        -1,
+        true,
+      );
+    } else {
+      cancelAnimation(pulseAnimationProgress);
+      pulseAnimationProgress.value = withTiming(0, {
+        duration: pulseAnimationStopDuration,
+      });
+    }
+
+    return () => {
+      cancelAnimation(pulseAnimationProgress);
+    };
+  }, [status]);
+  const glowAnimatedStyle = useAnimatedStyle(() => {
+    const scale = 1 + pulseAnimationProgress.value * 0.05;
+    const opacity = pulseAnimationProgress.value * 0.14;
+
+    return { transform: [{ scale }], opacity };
+  });
+  const timerTrackGlowAnimatedStyle = useAnimatedStyle(() => {
+    const scale = 1 + pulseAnimationProgress.value * 0.02;
+    const opacity = pulseAnimationProgress.value * 0.24;
+
+    return { transform: [{ scale }], opacity };
+  });
 
   return (
     <View style={styles.timerArea}>
       <View style={styles.timerRing}>
+        <Animated.View
+          style={[
+            styles.glowHalo,
+            {
+              borderColor: phaseColor,
+              shadowColor: phaseColor,
+            },
+            glowAnimatedStyle,
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.glowTimerTrack,
+            {
+              borderColor: phaseColor,
+              shadowColor: phaseColor,
+            },
+            timerTrackGlowAnimatedStyle,
+          ]}
+        />
         <Svg height={circleSize} width={circleSize}>
           <Circle
             cx={circleSize / 2}
@@ -83,7 +143,7 @@ export default function CircularTimer({
             cy={circleSize / 2}
             strokeWidth={circleStrokeWidth}
             r={circleRadius}
-            stroke={isFocusPhase ? colors.focus : colors.break}
+            stroke={phaseColor}
             fill="transparent"
             strokeDasharray={circleCircumference}
             transform={`rotate(-90 ${circleSize / 2}  ${circleSize / 2})`}
@@ -92,12 +152,7 @@ export default function CircularTimer({
 
         <View style={styles.timerCircle}>
           {status !== "ready" && status !== "completed" && (
-            <Text
-              style={[
-                styles.phaseLabel,
-                { color: isFocusPhase ? colors.focus : colors.break },
-              ]}
-            >
+            <Text style={[styles.phaseLabel, { color: phaseColor }]}>
               {upperCasePhaseName}
             </Text>
           )}
@@ -131,6 +186,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: circleSize,
     aspectRatio: 1,
+  },
+  glowHalo: {
+    position: "absolute",
+    width: circleSize + 15,
+    aspectRatio: 1,
+    borderRadius: radius.round,
+    backgroundColor: "transparent",
+    borderWidth: 3,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 24,
+    shadowOpacity: 0.65,
+  },
+  glowTimerTrack: {
+    position: "absolute",
+    width: circleSize,
+    aspectRatio: 1,
+    borderRadius: radius.round,
+    backgroundColor: "transparent",
+    borderWidth: 3,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 12,
+    shadowOpacity: 0.7,
   },
   timerCircle: {
     position: "absolute",
