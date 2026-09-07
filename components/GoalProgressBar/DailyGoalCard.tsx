@@ -1,7 +1,13 @@
 import { theme } from "@/constants/theme";
 import { dailyGoalSecondsExample } from "@/constants/timer.constants";
 import { PomodoroState } from "@/constants/types";
+import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import TrackedMetrics from "./TrackedMetrics";
 
 const { colors, typography, spacing, radius } = theme;
@@ -35,6 +41,17 @@ export default function DailyGoalCard({
     Math.min(totalFocusSeconds / dailyGoalSecondsExample, 1),
   );
 
+  const animatedProgress = useSharedValue(progress);
+  useEffect(() => {
+    animatedProgress.value = withTiming(progress, {
+      duration: 300,
+    });
+  }, [progress]);
+
+  const animatedWidth = useAnimatedStyle(() => ({
+    width: `${animatedProgress.value * 100}%`,
+  }));
+
   return (
     <View style={styles.goalCardContainer}>
       {/* Header: Section Caption and Minutes to Goal */}
@@ -46,9 +63,9 @@ export default function DailyGoalCard({
       </View>
 
       <View style={styles.progressBar}>
-        <View
-          style={[styles.progressBarFill, { width: `${progress * 100}%` }]}
-        ></View>
+        <Animated.View
+          style={[styles.progressBarFill, animatedWidth]}
+        ></Animated.View>
       </View>
 
       <TrackedMetrics

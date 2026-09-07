@@ -1,6 +1,12 @@
 import { theme } from "@/constants/theme";
 import { TimerSession } from "@/constants/types";
+import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedProps,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 
 interface CircularTimerProps {
@@ -14,6 +20,7 @@ const circleSize = 228;
 const circleStrokeWidth = 6;
 const circleRadius = (circleSize - circleStrokeWidth) / 2;
 const circleCircumference = 2 * Math.PI * circleRadius;
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const formatSecondsIntoMinutes = (totalSeconds: number) => {
   const minutes = Math.floor(totalSeconds / 60);
@@ -31,19 +38,32 @@ export default function CircularTimer({
 }: CircularTimerProps) {
   const { timerDurationSeconds, phase, status } = timerSession;
 
+  const isFocusPhase = phase === "focus";
+  const upperCasePhaseName = isFocusPhase
+    ? phase.toUpperCase()
+    : [phase.slice(0, -5), phase.slice(-5)].join(" ").toUpperCase();
+  const shortPhaseName = isFocusPhase ? "Focus" : "Break";
+
   const secondsRemaining = timerDurationSeconds - elapsedSeconds;
 
   const progress = Math.min(
     Math.max(elapsedSeconds / timerDurationSeconds, 0),
     1,
   );
-  const strokeDashoffset = circleCircumference * (1 - progress);
 
-  const isFocusPhase = phase === "focus";
-  const upperCasePhaseName = isFocusPhase
-    ? phase.toUpperCase()
-    : [phase.slice(0, -5), phase.slice(-5)].join(" ").toUpperCase();
-  const shortPhaseName = isFocusPhase ? "Focus" : "Break";
+  const animatedProgress = useSharedValue(progress);
+
+  useEffect(() => {
+    animatedProgress.value = withTiming(progress, {
+      duration: 300,
+    });
+  }, [progress]);
+
+  const animatedProps = useAnimatedProps(() => {
+    return {
+      strokeDashoffset: circleCircumference * (1 - animatedProgress.value),
+    };
+  });
 
   return (
     <View style={styles.timerArea}>
@@ -57,7 +77,8 @@ export default function CircularTimer({
             stroke={colors.surfaceElevated}
             fill="transparent"
           />
-          <Circle
+          <AnimatedCircle
+            animatedProps={animatedProps}
             cx={circleSize / 2}
             cy={circleSize / 2}
             strokeWidth={circleStrokeWidth}
@@ -65,7 +86,6 @@ export default function CircularTimer({
             stroke={isFocusPhase ? colors.focus : colors.break}
             fill="transparent"
             strokeDasharray={circleCircumference}
-            strokeDashoffset={strokeDashoffset}
             transform={`rotate(-90 ${circleSize / 2}  ${circleSize / 2})`}
           />
         </Svg>
