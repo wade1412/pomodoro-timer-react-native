@@ -127,7 +127,8 @@ export function reducer(
     case ACTION_LABELS.extendBreak: {
       if (
         !validateTimerStatus(state.timerSession) ||
-        !validateReducerAction(state.timerSession, ACTION_LABELS.extendBreak)
+        !validateReducerAction(state.timerSession, ACTION_LABELS.extendBreak) ||
+        state.timerSession.breakExtended
       ) {
         return state;
       }
