@@ -1,5 +1,6 @@
 import { theme } from "@/constants/theme";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
+import AnimatedPressable from "../ui/AnimatedPressable";
 
 const { colors, typography, radius, spacing } = theme;
 
@@ -15,14 +16,12 @@ export default function EndPhaseButton({
   label,
 }: EndPhaseButtonProps) {
   return (
-    <Pressable
+    <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
-      style={({ pressed }) => [
-        isRoundEnd ? styles.endRoundButton : styles.endPhaseButton,
-        pressed && {
-          borderColor: colors.textMuted,
-        },
-      ]}
+      containerStyle={styles.buttonWrapper}
+      style={isRoundEnd ? styles.endRoundButton : styles.endPhaseButton}
     >
       {({ pressed }) => (
         <Text
@@ -36,11 +35,14 @@ export default function EndPhaseButton({
           {label}
         </Text>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
+  buttonWrapper: {
+    width: "100%",
+  },
   endRoundButton: {
     height: 46,
     borderWidth: 1,

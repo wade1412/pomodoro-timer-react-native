@@ -1,7 +1,8 @@
 import { theme } from "@/constants/theme";
 import { breakExtensionDuration } from "@/constants/timer.constants";
 import { TimerPhase, TimerSession } from "@/constants/types";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import AnimatedPressable from "../ui/AnimatedPressable";
 import EndPhaseButton from "./EndPhaseButton";
 
 const { colors, typography, radius, spacing } = theme;
@@ -41,9 +42,10 @@ function CompletedRoundControls({
       <Text
         style={styles.hintText}
       >{`Round ${currentRoundNumber} complete. Ready for another?`}</Text>
-      <Pressable
+      <AnimatedPressable
         accessibilityRole="button"
         onPress={onNewSessionRound}
+        containerStyle={styles.fullWidthButton}
         style={({ pressed }) => [
           styles.timerButton,
           {
@@ -57,7 +59,7 @@ function CompletedRoundControls({
         <Text
           style={styles.timerButtonText}
         >{`Start Round ${currentRoundNumber + 1}`}</Text>
-      </Pressable>
+      </AnimatedPressable>
 
       <EndPhaseButton
         onPress={onEndSession}
@@ -79,14 +81,10 @@ function OptionalControls({
   return (
     <View style={styles.optionalButtonsContainer}>
       <View style={styles.buttonsRow}>
-        <Pressable
+        <AnimatedPressable
           onPress={onReset}
-          style={({ pressed }) => [
-            styles.resetButton,
-            pressed && {
-              borderColor: colors.textMuted,
-            },
-          ]}
+          containerStyle={styles.secondaryButtonWrapper}
+          style={({ pressed }) => [styles.resetButton]}
         >
           {({ pressed }) => (
             <Text
@@ -100,11 +98,11 @@ function OptionalControls({
               Reset Timer
             </Text>
           )}
-        </Pressable>
+        </AnimatedPressable>
 
         {/* Add Break Time Button */}
         {phase !== "focus" && (
-          <Pressable
+          <AnimatedPressable
             disabled={breakExtended}
             style={({ pressed }) => [
               styles.addBreakButton,
@@ -116,6 +114,7 @@ function OptionalControls({
               },
             ]}
             onPress={handleAddBreakTime}
+            containerStyle={styles.secondaryButtonWrapper}
           >
             {({ pressed }) => (
               <Text
@@ -126,7 +125,7 @@ function OptionalControls({
                 ]}
               >{`+${breakExtensionDuration / 60} min`}</Text>
             )}
-          </Pressable>
+          </AnimatedPressable>
         )}
       </View>
 
@@ -150,18 +149,17 @@ export default function TimerControls({
   onNewSessionRound,
   onEndSession,
 }: TimerControlsProps) {
-  const {
-    currentRoundNumber,
-    phase,
-    status,
-    breakExtended,
-    timerDurationSeconds,
-  } = timerSession;
+  const { currentRoundNumber, phase, status, breakExtended } = timerSession;
 
   const isFocusPhase = phase === "focus";
+  const phaseColor = isFocusPhase ? colors.focus : colors.break;
+  const phasePressedColor = isFocusPhase
+    ? colors.focusPressed
+    : colors.breakPressed;
 
   return (
     <>
+      {/* Completed Round controls */}
       {status === "completed" && (
         <CompletedRoundControls
           currentRoundNumber={currentRoundNumber}
@@ -171,29 +169,29 @@ export default function TimerControls({
       )}
 
       {status !== "completed" && (
+        // Start Pause/Resume Button
         <View style={styles.buttonContainer}>
-          {/* Start/Pause Button */}
-          <Pressable
+          <AnimatedPressable
             accessibilityRole="button"
+            accessibilityLabel="Start or pause the timer"
+            containerStyle={styles.fullWidthButton}
+            style={({ pressed }) => [
+              styles.timerButton,
+              {
+                backgroundColor: phaseColor,
+              },
+              pressed && {
+                backgroundColor: phasePressedColor,
+              },
+            ]}
             onPress={
               status === "ready" || status === "paused"
                 ? onRunTimerPhase
                 : onPauseTimerPhase
             }
-            style={({ pressed }) => [
-              styles.timerButton,
-              {
-                backgroundColor: isFocusPhase ? colors.focus : colors.break,
-              },
-              pressed && {
-                backgroundColor: isFocusPhase
-                  ? colors.focusPressed
-                  : colors.breakPressed,
-              },
-            ]}
           >
             <Text style={styles.timerButtonText}>{buttonText}</Text>
-          </Pressable>
+          </AnimatedPressable>
 
           {/* Reset Button */}
           {status !== "ready" && (
@@ -234,6 +232,9 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: colors.background,
   },
+  fullWidthButton: {
+    width: "100%",
+  },
   // Optional Buttons
   optionalButtonsContainer: {
     flexDirection: "column",
@@ -244,8 +245,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     width: "100%",
   },
-  resetButton: {
+  secondaryButtonWrapper: {
     flex: 1,
+  },
+  resetButton: {
     height: 46,
     borderWidth: 1,
     borderRadius: radius.md,
@@ -260,7 +263,6 @@ const styles = StyleSheet.create({
     fontWeight: 400,
   },
   addBreakButton: {
-    flex: 1,
     height: 46,
     borderWidth: 1,
     backgroundColor: colors.surface,

@@ -43,6 +43,7 @@ export default function CircularTimer({
 
   const isFocusPhase = phase === "focus";
   const phaseColor = isFocusPhase ? colors.focus : colors.break;
+  const phaseSoftColor = isFocusPhase ? colors.focusSoft : colors.breakSoft;
   const upperCasePhaseName = isFocusPhase
     ? phase.toUpperCase()
     : [phase.slice(0, -5), phase.slice(-5)].join(" ").toUpperCase();
@@ -112,8 +113,8 @@ export default function CircularTimer({
           style={[
             styles.glowHalo,
             {
-              borderColor: phaseColor,
-              shadowColor: phaseColor,
+              borderColor: phaseSoftColor,
+              shadowColor: phaseSoftColor,
             },
             glowAnimatedStyle,
           ]}
