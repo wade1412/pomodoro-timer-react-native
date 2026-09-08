@@ -4,6 +4,9 @@ import { useEffect } from "react";
 import { Easing, StyleSheet, Text, View } from "react-native";
 import Animated, {
   cancelAnimation,
+  FadeIn,
+  FadeOut,
+  ReduceMotion,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
@@ -47,7 +50,13 @@ export default function CircularTimer({
   const upperCasePhaseName = isFocusPhase
     ? phase.toUpperCase()
     : [phase.slice(0, -5), phase.slice(-5)].join(" ").toUpperCase();
-  const shortPhaseName = isFocusPhase ? "Focus" : "Break";
+
+  const statusLabel =
+    status === "running"
+      ? "in progress"
+      : status === "completed"
+        ? `${isFocusPhase ? "Focus" : "Break"} complete`
+        : "paused";
 
   const secondsRemaining = timerDurationSeconds - elapsedSeconds;
 
@@ -153,21 +162,26 @@ export default function CircularTimer({
 
         <View style={styles.timerCircle}>
           {status !== "ready" && status !== "completed" && (
-            <Text style={[styles.phaseLabel, { color: phaseColor }]}>
+            <Animated.Text
+              style={[styles.phaseLabel, { color: phaseColor }]}
+              key={phase}
+              entering={FadeIn.duration(250).reduceMotion(ReduceMotion.System)}
+              exiting={FadeOut.duration(250).reduceMotion(ReduceMotion.System)}
+            >
               {upperCasePhaseName}
-            </Text>
+            </Animated.Text>
           )}
           <Text style={styles.timerText}>
             {formatSecondsIntoMinutes(secondsRemaining)}
           </Text>
           {status !== "ready" && (
-            <Text style={styles.timerStatus}>
-              {status === "running"
-                ? "in progress"
-                : status === "completed"
-                  ? `${shortPhaseName} complete`
-                  : "paused"}
-            </Text>
+            <Animated.Text
+              style={styles.timerStatus}
+              entering={FadeIn.duration(250).reduceMotion(ReduceMotion.System)}
+              exiting={FadeOut.duration(250).reduceMotion(ReduceMotion.System)}
+            >
+              {statusLabel}
+            </Animated.Text>
           )}
         </View>
       </View>

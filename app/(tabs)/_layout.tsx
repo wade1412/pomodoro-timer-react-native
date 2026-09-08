@@ -17,6 +17,14 @@ export default function TabLayout() {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
+          position: "absolute",
+          justifyContent: "center",
+          flexDirection: "row",
+          alignItems: "center",
+          zIndex: 999,
+          bottom: 0,
+          left: 0,
+          right: 0,
         },
       }}
     >

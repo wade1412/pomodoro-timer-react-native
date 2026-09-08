@@ -2,6 +2,12 @@ import { theme } from "@/constants/theme";
 import { breakExtensionDuration } from "@/constants/timer.constants";
 import { TimerPhase, TimerSession } from "@/constants/types";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeOut,
+  FadeOutDown,
+} from "react-native-reanimated";
 import AnimatedPressable from "../ui/AnimatedPressable";
 import EndPhaseButton from "./EndPhaseButton";
 
@@ -38,7 +44,7 @@ function CompletedRoundControls({
   onEndSession: () => void;
 }) {
   return (
-    <View style={styles.buttonContainer}>
+    <>
       <Text
         style={styles.hintText}
       >{`Round ${currentRoundNumber} complete. Ready for another?`}</Text>
@@ -66,7 +72,7 @@ function CompletedRoundControls({
         label="End Session"
         isRoundEnd={true}
       />
-    </View>
+    </>
   );
 }
 
@@ -79,7 +85,7 @@ function OptionalControls({
   onEndSession,
 }: OptionalControlsProps) {
   return (
-    <View style={styles.optionalButtonsContainer}>
+    <>
       <View style={styles.buttonsRow}>
         <AnimatedPressable
           onPress={onReset}
@@ -134,7 +140,7 @@ function OptionalControls({
       ) : (
         <EndPhaseButton label={"End Session"} onPress={onEndSession} />
       )}
-    </View>
+    </>
   );
 }
 
@@ -161,11 +167,17 @@ export default function TimerControls({
     <>
       {/* Completed Round controls */}
       {status === "completed" && (
-        <CompletedRoundControls
-          currentRoundNumber={currentRoundNumber}
-          onNewSessionRound={onNewSessionRound}
-          onEndSession={onEndSession}
-        />
+        <Animated.View
+          style={styles.buttonContainer}
+          entering={FadeInDown.duration(300)}
+          exiting={FadeOutDown.duration(300)}
+        >
+          <CompletedRoundControls
+            currentRoundNumber={currentRoundNumber}
+            onNewSessionRound={onNewSessionRound}
+            onEndSession={onEndSession}
+          />
+        </Animated.View>
       )}
 
       {status !== "completed" && (
@@ -190,19 +202,32 @@ export default function TimerControls({
                 : onPauseTimerPhase
             }
           >
-            <Text style={styles.timerButtonText}>{buttonText}</Text>
+            <Animated.Text
+              style={styles.timerButtonText}
+              key={buttonText}
+              entering={FadeIn.duration(100)}
+              exiting={FadeOut.duration(100)}
+            >
+              {buttonText}
+            </Animated.Text>
           </AnimatedPressable>
 
           {/* Reset Button */}
           {status !== "ready" && (
-            <OptionalControls
-              phase={phase}
-              onReset={onTimerReset}
-              breakExtended={breakExtended}
-              handleAddBreakTime={onAddBreakTime}
-              handleEndBreak={onBreakComplete}
-              onEndSession={onEndSession}
-            />
+            <Animated.View
+              style={styles.optionalButtonsContainer}
+              entering={FadeInDown.duration(300)}
+              exiting={FadeOutDown.duration(300)}
+            >
+              <OptionalControls
+                phase={phase}
+                onReset={onTimerReset}
+                breakExtended={breakExtended}
+                handleAddBreakTime={onAddBreakTime}
+                handleEndBreak={onBreakComplete}
+                onEndSession={onEndSession}
+              />
+            </Animated.View>
           )}
         </View>
       )}

@@ -6,6 +6,7 @@ import { POMODORO_INITIAL_STATE } from "@/constants/types";
 import { reducer } from "@/state/pomodoroReducer";
 import { ACTION_LABELS } from "@/state/reducer.helpers";
 import { getEffectiveElapsedSeconds } from "@/utils/timer";
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { useEffect, useReducer, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -122,9 +123,18 @@ export default function FocusScreen() {
     nowSeconds,
   );
 
+  const tabBarHeight = useBottomTabBarHeight();
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
-      <View style={styles.mainContainer}>
+      <View
+        style={[
+          styles.mainContainer,
+          {
+            paddingBottom: tabBarHeight + spacing.sm,
+          },
+        ]}
+      >
         <View style={styles.contentColumn}>
           {/* Header */}
           <View style={styles.header}>
@@ -141,22 +151,26 @@ export default function FocusScreen() {
 
           {/* Timer Area */}
           <View style={styles.timerAndActionsContainer}>
-            <CircularTimer
-              timerSession={state.timerSession}
-              elapsedSeconds={effectiveElapsedSeconds}
-            />
+            <View style={styles.timerSlot}>
+              <CircularTimer
+                timerSession={state.timerSession}
+                elapsedSeconds={effectiveElapsedSeconds}
+              />
+            </View>
 
-            <TimerControls
-              timerSession={state.timerSession}
-              buttonText={timerButtonText}
-              onRunTimerPhase={runTimerPhase}
-              onPauseTimerPhase={pauseTimerPhase}
-              onTimerReset={onTimerReset}
-              onAddBreakTime={onAddBreakTime}
-              onBreakComplete={onBreakEnd}
-              onNewSessionRound={onNewSessionRound}
-              onEndSession={onEndSession}
-            />
+            <View style={styles.controlsSlot}>
+              <TimerControls
+                timerSession={state.timerSession}
+                buttonText={timerButtonText}
+                onRunTimerPhase={runTimerPhase}
+                onPauseTimerPhase={pauseTimerPhase}
+                onTimerReset={onTimerReset}
+                onAddBreakTime={onAddBreakTime}
+                onBreakComplete={onBreakEnd}
+                onNewSessionRound={onNewSessionRound}
+                onEndSession={onEndSession}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -174,13 +188,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    paddingBottom: spacing.xl,
   },
   contentColumn: {
     flex: 1,
+    minHeight: 0,
     width: "100%",
     maxWidth: 320,
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   header: {
     paddingHorizontal: spacing.sm,
@@ -199,10 +213,20 @@ const styles = StyleSheet.create({
   },
   timerAndActionsContainer: {
     flex: 1,
+    minHeight: 0,
     flexDirection: "column",
-    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: spacing.lg,
-    gap: spacing["2xl"],
+  },
+  timerSlot: {
+    flex: 1,
+    minHeight: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  controlsSlot: {
+    width: "100%",
+    minHeight: 180,
+    justifyContent: "flex-start",
   },
 });
