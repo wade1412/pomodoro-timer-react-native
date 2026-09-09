@@ -88,7 +88,7 @@ export const theme = {
     button: {
       fontSize: 16,
       lineHeight: 20,
-      fontWeight: "500",
+      fontWeight: "400",
     },
   },
 } as const;

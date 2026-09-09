@@ -1,6 +1,7 @@
 import DailyGoalCard from "@/components/GoalProgressBar/DailyGoalCard";
 import CircularTimer from "@/components/Timer/CircularTimer";
 import TimerControls from "@/components/Timer/TimerControls";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { theme } from "@/constants/theme";
 import { POMODORO_INITIAL_STATE } from "@/constants/types";
 import { reducer } from "@/state/pomodoroReducer";
@@ -8,7 +9,7 @@ import { ACTION_LABELS } from "@/state/reducer.helpers";
 import { getEffectiveElapsedSeconds } from "@/utils/timer";
 import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import { useEffect, useReducer, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { colors, typography, spacing } = theme;
@@ -137,11 +138,7 @@ export default function FocusScreen() {
       >
         <View style={styles.contentColumn}>
           {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Focus</Text>
-
-            <Text style={styles.date}>{formattedDate}</Text>
-          </View>
+          <ScreenHeader title="Focus" subtitle={formattedDate} />
 
           {/* Tracking Area */}
           <DailyGoalCard
@@ -195,21 +192,6 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 320,
     gap: spacing.md,
-  },
-  header: {
-    paddingHorizontal: spacing.sm,
-    paddingTop: spacing["3xl"],
-    paddingBottom: spacing.sm,
-    gap: spacing.xs,
-  },
-  title: {
-    ...typography.screenTitle,
-    color: colors.textPrimary,
-  },
-  date: {
-    ...typography.body,
-    color: colors.textSecondary,
-    letterSpacing: 1.2,
   },
   timerAndActionsContainer: {
     flex: 1,
