@@ -1,14 +1,168 @@
+import CurrentGoalSection from "@/components/FocusGoal/CurrentGoalSection";
+import ScreenHeader from "@/components/ui/ScreenHeader";
 import { theme } from "@/constants/theme";
-import { StyleSheet, Text, View } from "react-native";
+import { dailyGoalSecondsExample } from "@/constants/timer.constants";
+import { useBottomTabBarHeight } from "expo-router/js-tabs";
+import { useState } from "react";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const { colors, typography } = theme;
+const { colors, typography, spacing, radius } = theme;
+
+const QUICK_PRESETS = [3000, 4500, 6000, 7500, 9000, 12000];
+const MIN_DAILY_GOAL_MINUTES = 1;
+const MAX_DAILY_GOAL_MINUTES = 1440;
 
 export default function MyGoalScreen() {
+  const [number, setNumber] = useState("");
+  const [dailyGoalSeconds, setDailyGoalSeconds] = useState(
+    dailyGoalSecondsExample,
+  );
+  const [selectedPreset, setSelectedPreset] = useState<null | number>(
+    QUICK_PRESETS.includes(dailyGoalSecondsExample)
+      ? dailyGoalSecondsExample
+      : null,
+  );
+
+  const handleTextChange = (text: string) => {
+    const cleanedText = text.replace(/[^0-9]/g, "");
+    setNumber(cleanedText);
+  };
+
+  const tabBarHeight = useBottomTabBarHeight();
+  const customMinutes = Number(number);
+  const isCustomGoalValid =
+    number.length > 0 &&
+    customMinutes >= MIN_DAILY_GOAL_MINUTES &&
+    customMinutes <= MAX_DAILY_GOAL_MINUTES;
+
+  const handlePresetPress = (presetSeconds: number) => {
+    setSelectedPreset(presetSeconds);
+    setDailyGoalSeconds(presetSeconds);
+    setNumber("");
+  };
+
+  const handleSetCustomGoal = () => {
+    if (!isCustomGoalValid) return;
+
+    setDailyGoalSeconds(customMinutes * 60);
+    setSelectedPreset(null);
+    Keyboard.dismiss();
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>My Goal</Text>
-      <View style={styles.separator} />
-    </View>
+    <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={[
+            styles.mainContainer,
+            { paddingBottom: tabBarHeight + spacing.md },
+          ]}
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.contentColumn}>
+            <ScreenHeader
+              title="My Goal"
+              subtitle="Set your daily focus target"
+            />
+
+            <CurrentGoalSection dailyGoalSeconds={dailyGoalSeconds} />
+
+            <View style={styles.verticalContainer}>
+              <Text style={styles.sectionCaption}>QUICK PRESETS</Text>
+              <View style={styles.quickPresetsGrid}>
+                {QUICK_PRESETS.map((presetSeconds) => {
+                  const isSelected = presetSeconds === selectedPreset;
+                  return (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isSelected }}
+                      key={presetSeconds}
+                      onPress={() => handlePresetPress(presetSeconds)}
+                      style={({ pressed }) => [
+                        styles.presetCard,
+                        pressed && styles.presetCardPressed,
+                        isSelected && styles.presetCardSelected,
+                        isSelected && pressed && styles.presetCardSelectedPressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.presetCardText,
+                          isSelected && styles.presetCardTextSelected,
+                        ]}
+                      >{`${Math.floor(presetSeconds / 60)} min`}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.verticalContainer}>
+              <Text style={styles.sectionCaption}>CUSTOM</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  accessibilityLabel="Custom daily goal in minutes"
+                  style={styles.minutesInput}
+                  value={number}
+                  onChangeText={handleTextChange}
+                  onSubmitEditing={handleSetCustomGoal}
+                  placeholder="Enter minutes..."
+                  keyboardType="number-pad"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholderTextColor={colors.textMuted}
+                  returnKeyType="done"
+                />
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !isCustomGoalValid }}
+                  disabled={!isCustomGoalValid}
+                  onPress={handleSetCustomGoal}
+                  style={({ pressed }) => [
+                    styles.setMinutesButton,
+                    pressed && styles.setMinutesButtonPressed,
+                    !isCustomGoalValid && styles.setMinutesButtonDisabled,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.setMinutesButtonText,
+                      !isCustomGoalValid && styles.setMinutesButtonTextDisabled,
+                    ]}
+                  >
+                    Set
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.hintContainer}>
+              <Text style={styles.hint}>
+                Your daily goal tracks total focus time spent today. The
+                calendar shows days where you have hit your goal
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -17,18 +171,114 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  container: {
+  keyboardAvoidingView: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
-  title: {
-    ...typography.screenTitle,
+  mainContainer: {
+    flexGrow: 1,
+    alignItems: "center",
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  contentColumn: {
+    width: "100%",
+    maxWidth: 320,
+    gap: spacing.lg,
+  },
+  verticalContainer: {
+    flexDirection: "column",
+    gap: spacing.md,
+    width: "100%",
+  },
+  sectionCaption: {
+    ...typography.caption,
+    color: colors.textMuted,
+    letterSpacing: 1,
+  },
+
+  quickPresetsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  presetCard: {
+    backgroundColor: colors.surface,
+    width: "31%",
+    aspectRatio: 2,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  presetCardPressed: {
+    backgroundColor: colors.surfaceElevated,
+  },
+  presetCardSelected: {
+    backgroundColor: colors.focus,
+    borderColor: colors.focus,
+  },
+  presetCardSelectedPressed: {
+    backgroundColor: colors.focusPressed,
+    borderColor: colors.focusPressed,
+  },
+  presetCardText: {
+    ...typography.button,
     color: colors.textPrimary,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: "80%",
+  presetCardTextSelected: {
+    color: colors.background,
+  },
+  inputContainer: {
+    width: "100%",
+    gap: spacing.md,
+    flexDirection: "row",
+  },
+  minutesInput: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.textPrimary,
+  },
+
+  setMinutesButton: {
+    paddingHorizontal: spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.md,
+    backgroundColor: colors.focus,
+  },
+  setMinutesButtonPressed: {
+    backgroundColor: colors.focusPressed,
+  },
+  setMinutesButtonDisabled: {
+    backgroundColor: colors.surfaceElevated,
+  },
+  setMinutesButtonText: {
+    ...typography.button,
+    color: colors.background,
+  },
+  setMinutesButtonTextDisabled: {
+    color: colors.textMuted,
+  },
+
+  hintContainer: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+  },
+  hint: {
+    ...typography.body,
+    fontSize: 13,
+    fontWeight: 400,
+    color: colors.textMuted,
   },
 });
