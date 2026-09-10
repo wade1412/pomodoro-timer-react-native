@@ -1,4 +1,5 @@
 import CurrentGoalSection from "@/components/FocusGoal/CurrentGoalSection";
+import AnimatedPressable from "@/components/ui/AnimatedPressable";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { theme } from "@/constants/theme";
 import { dailyGoalSecondsExample } from "@/constants/timer.constants";
@@ -8,7 +9,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -88,17 +88,28 @@ export default function MyGoalScreen() {
               <View style={styles.quickPresetsGrid}>
                 {QUICK_PRESETS.map((presetSeconds) => {
                   const isSelected = presetSeconds === selectedPreset;
+
+                  const presetMinutes = Math.floor(presetSeconds / 60);
                   return (
-                    <Pressable
+                    <AnimatedPressable
                       accessibilityRole="button"
+                      accessibilityLabel={`Apply ${presetMinutes} minutes preset`}
                       accessibilityState={{ selected: isSelected }}
                       key={presetSeconds}
                       onPress={() => handlePresetPress(presetSeconds)}
+                      containerStyle={{
+                        width: "31%",
+                        borderRadius: radius.md,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}
                       style={({ pressed }) => [
                         styles.presetCard,
                         pressed && styles.presetCardPressed,
                         isSelected && styles.presetCardSelected,
-                        isSelected && pressed && styles.presetCardSelectedPressed,
+                        isSelected &&
+                          pressed &&
+                          styles.presetCardSelectedPressed,
                       ]}
                     >
                       <Text
@@ -106,8 +117,8 @@ export default function MyGoalScreen() {
                           styles.presetCardText,
                           isSelected && styles.presetCardTextSelected,
                         ]}
-                      >{`${Math.floor(presetSeconds / 60)} min`}</Text>
-                    </Pressable>
+                      >{`${presetMinutes} min`}</Text>
+                    </AnimatedPressable>
                   );
                 })}
               </View>
@@ -130,8 +141,9 @@ export default function MyGoalScreen() {
                   returnKeyType="done"
                 />
 
-                <Pressable
+                <AnimatedPressable
                   accessibilityRole="button"
+                  accessibilityLabel="Set goal minutes"
                   accessibilityState={{ disabled: !isCustomGoalValid }}
                   disabled={!isCustomGoalValid}
                   onPress={handleSetCustomGoal}
@@ -149,7 +161,7 @@ export default function MyGoalScreen() {
                   >
                     Set
                   </Text>
-                </Pressable>
+                </AnimatedPressable>
               </View>
             </View>
 
@@ -204,14 +216,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   presetCard: {
-    backgroundColor: colors.surface,
-    width: "31%",
-    aspectRatio: 2,
-    justifyContent: "center",
-    alignItems: "center",
+    width: "100%",
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.lg,
   },
   presetCardPressed: {
     backgroundColor: colors.surfaceElevated,
@@ -249,6 +259,7 @@ const styles = StyleSheet.create({
   },
 
   setMinutesButton: {
+    height: "100%",
     paddingHorizontal: spacing.xl,
     alignItems: "center",
     justifyContent: "center",
