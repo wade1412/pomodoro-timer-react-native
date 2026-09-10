@@ -1,5 +1,4 @@
 import { theme } from "@/constants/theme";
-import { dailyGoalSecondsExample } from "@/constants/timer.constants";
 import { PomodoroState } from "@/constants/types";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -15,11 +14,13 @@ const { colors, typography, spacing, radius } = theme;
 interface DailyGoalCardProps {
   state: PomodoroState;
   elapsedSeconds: number;
+  dailyGoalSeconds: number;
 }
 
 export default function DailyGoalCard({
   state,
   elapsedSeconds,
+  dailyGoalSeconds,
 }: DailyGoalCardProps) {
   const { trackedValues, timerSession } = state;
   const { breakSeconds, completedRounds, focusSeconds } = trackedValues;
@@ -38,7 +39,7 @@ export default function DailyGoalCard({
 
   const progress = Math.max(
     0,
-    Math.min(totalFocusSeconds / dailyGoalSecondsExample, 1),
+    Math.min(totalFocusSeconds / dailyGoalSeconds, 1),
   );
 
   const animatedProgress = useSharedValue(progress);
@@ -59,7 +60,7 @@ export default function DailyGoalCard({
         <Text style={styles.goalCardTitle}>DAILY GOAL</Text>
         <Text
           style={styles.goalMinutes}
-        >{`${displayFocusMinutes}/${Math.floor(dailyGoalSecondsExample / 60)} min`}</Text>
+        >{`${displayFocusMinutes}/${Math.floor(dailyGoalSeconds / 60)} min`}</Text>
       </View>
 
       <View style={styles.progressBar}>

@@ -5,5 +5,3 @@ export const shortBreakPhaseDuration = 300;
 export const longBreakPhaseDuration = 900;
 
 export const breakExtensionDuration = 300;
-
-export const dailyGoalSecondsExample = 100 * 60;

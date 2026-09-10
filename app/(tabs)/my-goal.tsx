@@ -1,8 +1,14 @@
 import CurrentGoalSection from "@/components/FocusGoal/CurrentGoalSection";
 import AnimatedPressable from "@/components/ui/AnimatedPressable";
 import ScreenHeader from "@/components/ui/ScreenHeader";
+import {
+  MAX_DAILY_GOAL_MINUTES,
+  MIN_DAILY_GOAL_MINUTES,
+  QUICK_GOAL_PRESETS_SECONDS,
+} from "@/constants/goal.constants";
 import { theme } from "@/constants/theme";
-import { dailyGoalSecondsExample } from "@/constants/timer.constants";
+
+import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { useState } from "react";
 import {
@@ -19,18 +25,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const { colors, typography, spacing, radius } = theme;
 
-const QUICK_PRESETS = [3000, 4500, 6000, 7500, 9000, 12000];
-const MIN_DAILY_GOAL_MINUTES = 1;
-const MAX_DAILY_GOAL_MINUTES = 1440;
-
 export default function MyGoalScreen() {
   const [number, setNumber] = useState("");
-  const [dailyGoalSeconds, setDailyGoalSeconds] = useState(
-    dailyGoalSecondsExample,
-  );
+  const { dailyGoalSeconds, updateDailyGoalSeconds } = useAppSettings();
+
   const [selectedPreset, setSelectedPreset] = useState<null | number>(
-    QUICK_PRESETS.includes(dailyGoalSecondsExample)
-      ? dailyGoalSecondsExample
+    QUICK_GOAL_PRESETS_SECONDS.includes(dailyGoalSeconds)
+      ? dailyGoalSeconds
       : null,
   );
 
@@ -41,21 +42,22 @@ export default function MyGoalScreen() {
 
   const tabBarHeight = useBottomTabBarHeight();
   const customMinutes = Number(number);
+
+  const handlePresetPress = (presetSeconds: number) => {
+    setSelectedPreset(presetSeconds);
+    updateDailyGoalSeconds(presetSeconds);
+    setNumber("");
+  };
+
   const isCustomGoalValid =
     number.length > 0 &&
     customMinutes >= MIN_DAILY_GOAL_MINUTES &&
     customMinutes <= MAX_DAILY_GOAL_MINUTES;
 
-  const handlePresetPress = (presetSeconds: number) => {
-    setSelectedPreset(presetSeconds);
-    setDailyGoalSeconds(presetSeconds);
-    setNumber("");
-  };
-
   const handleSetCustomGoal = () => {
     if (!isCustomGoalValid) return;
 
-    setDailyGoalSeconds(customMinutes * 60);
+    updateDailyGoalSeconds(customMinutes * 60);
     setSelectedPreset(null);
     Keyboard.dismiss();
   };
@@ -86,7 +88,7 @@ export default function MyGoalScreen() {
             <View style={styles.verticalContainer}>
               <Text style={styles.sectionCaption}>QUICK PRESETS</Text>
               <View style={styles.quickPresetsGrid}>
-                {QUICK_PRESETS.map((presetSeconds) => {
+                {QUICK_GOAL_PRESETS_SECONDS.map((presetSeconds) => {
                   const isSelected = presetSeconds === selectedPreset;
 
                   const presetMinutes = Math.floor(presetSeconds / 60);

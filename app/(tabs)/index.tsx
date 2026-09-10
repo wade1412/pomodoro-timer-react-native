@@ -4,6 +4,7 @@ import TimerControls from "@/components/Timer/TimerControls";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { theme } from "@/constants/theme";
 import { POMODORO_INITIAL_STATE } from "@/constants/types";
+import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { reducer } from "@/state/pomodoroReducer";
 import { ACTION_LABELS } from "@/state/reducer.helpers";
 import { getEffectiveElapsedSeconds } from "@/utils/timer";
@@ -18,6 +19,8 @@ export default function FocusScreen() {
   const [state, dispatch] = useReducer(reducer, POMODORO_INITIAL_STATE);
 
   const [nowSeconds, setNowSeconds] = useState(Math.floor(Date.now() / 1000));
+
+  const { dailyGoalSeconds } = useAppSettings();
 
   useEffect(() => {
     if (state.timerSession.status !== "running") return;
@@ -144,6 +147,7 @@ export default function FocusScreen() {
           <DailyGoalCard
             state={state}
             elapsedSeconds={effectiveElapsedSeconds}
+            dailyGoalSeconds={dailyGoalSeconds}
           />
 
           {/* Timer Area */}
