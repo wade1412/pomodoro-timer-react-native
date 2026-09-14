@@ -29,12 +29,6 @@ export default function MyGoalScreen() {
   const [number, setNumber] = useState("");
   const { dailyGoalSeconds, updateDailyGoalSeconds } = useAppSettings();
 
-  const [selectedPreset, setSelectedPreset] = useState<null | number>(
-    QUICK_GOAL_PRESETS_SECONDS.includes(dailyGoalSeconds)
-      ? dailyGoalSeconds
-      : null,
-  );
-
   const handleTextChange = (text: string) => {
     const cleanedText = text.replace(/[^0-9]/g, "");
     setNumber(cleanedText);
@@ -44,7 +38,6 @@ export default function MyGoalScreen() {
   const customMinutes = Number(number);
 
   const handlePresetPress = (presetSeconds: number) => {
-    setSelectedPreset(presetSeconds);
     updateDailyGoalSeconds(presetSeconds);
     setNumber("");
   };
@@ -58,7 +51,6 @@ export default function MyGoalScreen() {
     if (!isCustomGoalValid) return;
 
     updateDailyGoalSeconds(customMinutes * 60);
-    setSelectedPreset(null);
     Keyboard.dismiss();
   };
 
@@ -89,7 +81,7 @@ export default function MyGoalScreen() {
               <Text style={styles.sectionCaption}>QUICK PRESETS</Text>
               <View style={styles.quickPresetsGrid}>
                 {QUICK_GOAL_PRESETS_SECONDS.map((presetSeconds) => {
-                  const isSelected = presetSeconds === selectedPreset;
+                  const isSelected = presetSeconds === dailyGoalSeconds;
 
                   const presetMinutes = Math.floor(presetSeconds / 60);
                   return (

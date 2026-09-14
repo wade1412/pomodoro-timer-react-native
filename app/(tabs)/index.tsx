@@ -8,7 +8,7 @@ import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { reducer } from "@/state/pomodoroReducer";
 import { ACTION_LABELS } from "@/state/reducer.helpers";
 import { getEffectiveElapsedSeconds } from "@/utils/timer";
-import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
+import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { useEffect, useReducer, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
