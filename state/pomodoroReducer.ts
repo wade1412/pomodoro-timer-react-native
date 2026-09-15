@@ -1,8 +1,5 @@
 import {
   breakExtensionDuration,
-  focusPhaseDuration,
-  longBreakPhaseDuration,
-  shortBreakPhaseDuration,
 } from "@/constants/timer.constants";
 import { DEFAULT_TIMER_SESSION, PomodoroState } from "@/constants/types";
 import {
@@ -31,7 +28,9 @@ export function reducer(
       }
 
       const remainingDuration =
-        state.timerSession.timerDurationSeconds -
+        (state.timerSession.status === "ready"
+          ? action.phaseDurationSeconds
+          : state.timerSession.timerDurationSeconds) -
         state.timerSession.accumulatedActiveSeconds;
       const newEndsAt = action.nowSeconds + remainingDuration;
 
@@ -39,6 +38,10 @@ export function reducer(
         ...state,
         timerSession: {
           ...state.timerSession,
+          timerDurationSeconds:
+            state.timerSession.status === "ready"
+              ? action.phaseDurationSeconds
+              : state.timerSession.timerDurationSeconds,
           startedAtSeconds: action.nowSeconds,
           endsAtSeconds: newEndsAt,
           status: "running",
@@ -86,11 +89,6 @@ export function reducer(
 
       const isRunning = state.timerSession.status === "running";
       const isFocusPhase = state.timerSession.phase === "focus";
-      const defaultPhaseDuration = isFocusPhase
-        ? focusPhaseDuration
-        : state.timerSession.phase === "longBreak"
-          ? longBreakPhaseDuration
-          : shortBreakPhaseDuration;
 
       // Calculate accumulated seconds for running status; for paused get it from the state
       const newAccumulatedSeconds =
@@ -115,7 +113,7 @@ export function reducer(
         timerSession: {
           ...state.timerSession,
           status: "ready",
-          timerDurationSeconds: defaultPhaseDuration,
+          timerDurationSeconds: action.phaseDurationSeconds,
           accumulatedActiveSeconds: 0,
           breakExtended: false,
           startedAtSeconds: null,
@@ -202,8 +200,8 @@ export function reducer(
           phase: isLongBreakNext ? "longBreak" : "shortBreak",
           status: "ready",
           timerDurationSeconds: isLongBreakNext
-            ? longBreakPhaseDuration
-            : shortBreakPhaseDuration,
+            ? action.longBreakDurationSeconds
+            : action.shortBreakDurationSeconds,
           accumulatedActiveSeconds: 0,
           breakExtended: false,
           startedAtSeconds: null,
@@ -256,7 +254,8 @@ export function reducer(
         return state;
       }
 
-      const newSessionEndsAt = action.nowSeconds + focusPhaseDuration;
+      const newSessionEndsAt =
+        action.nowSeconds + action.focusDurationSeconds;
 
       return {
         ...state,
@@ -264,7 +263,7 @@ export function reducer(
           ...state.timerSession,
           phase: "focus",
           status: "running",
-          timerDurationSeconds: focusPhaseDuration,
+          timerDurationSeconds: action.focusDurationSeconds,
           accumulatedActiveSeconds: 0,
           breakExtended: false,
           sessionActive: true,
@@ -308,7 +307,10 @@ export function reducer(
 
       return {
         trackedValues: newTrackedValues,
-        timerSession: DEFAULT_TIMER_SESSION,
+        timerSession: {
+          ...DEFAULT_TIMER_SESSION,
+          timerDurationSeconds: action.focusDurationSeconds,
+        },
       };
 
     default:

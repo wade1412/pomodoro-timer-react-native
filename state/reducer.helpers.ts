@@ -15,14 +15,34 @@ export const ACTION_LABELS = {
 type ActionLabel = (typeof ACTION_LABELS)[keyof typeof ACTION_LABELS];
 
 export type ReducerAction =
-  | { type: typeof ACTION_LABELS.startOrResumePhase; nowSeconds: number }
+  | {
+      type: typeof ACTION_LABELS.startOrResumePhase;
+      nowSeconds: number;
+      phaseDurationSeconds: number;
+    }
   | { type: typeof ACTION_LABELS.pausePhase; nowSeconds: number }
   | { type: typeof ACTION_LABELS.extendBreak; nowSeconds: number }
   | { type: typeof ACTION_LABELS.endBreak; nowSeconds: number }
-  | { type: typeof ACTION_LABELS.newSessionRound; nowSeconds: number }
-  | { type: typeof ACTION_LABELS.endSession; nowSeconds: number }
-  | { type: typeof ACTION_LABELS.completeFocus } // No nowSeconds needed
-  | { type: typeof ACTION_LABELS.resetTimer; nowSeconds: number };
+  | {
+      type: typeof ACTION_LABELS.newSessionRound;
+      nowSeconds: number;
+      focusDurationSeconds: number;
+    }
+  | {
+      type: typeof ACTION_LABELS.endSession;
+      nowSeconds: number;
+      focusDurationSeconds: number;
+    }
+  | {
+      type: typeof ACTION_LABELS.completeFocus;
+      shortBreakDurationSeconds: number;
+      longBreakDurationSeconds: number;
+    }
+  | {
+      type: typeof ACTION_LABELS.resetTimer;
+      nowSeconds: number;
+      phaseDurationSeconds: number;
+    };
 
 type reducerActionValidValues = {
   allowedStatuses: TimerStatus[];

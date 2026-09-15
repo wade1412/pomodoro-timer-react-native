@@ -23,6 +23,7 @@ describe("state reducer function", () => {
     const newState = reducer(POMODORO_INITIAL_STATE, {
       type: ACTION_LABELS.startOrResumePhase,
       nowSeconds,
+      phaseDurationSeconds: focusPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -129,6 +130,7 @@ describe("state reducer function", () => {
     const newState = reducer(pausedState, {
       type: ACTION_LABELS.startOrResumePhase,
       nowSeconds: nowSeconds,
+      phaseDurationSeconds: focusPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -170,6 +172,7 @@ describe("state reducer function", () => {
     const newState = reducer(runningState, {
       type: ACTION_LABELS.resetTimer,
       nowSeconds: newNowSeconds,
+      phaseDurationSeconds: focusPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -217,6 +220,7 @@ describe("state reducer function", () => {
     const newState = reducer(pausedState, {
       type: ACTION_LABELS.resetTimer,
       nowSeconds: nowSeconds,
+      phaseDurationSeconds: focusPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -263,6 +267,7 @@ describe("state reducer function", () => {
     const newState = reducer(runningState, {
       type: ACTION_LABELS.resetTimer,
       nowSeconds: newNowSeconds,
+      phaseDurationSeconds: shortBreakPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -305,6 +310,8 @@ describe("state reducer function", () => {
 
     const newState = reducer(finishingState, {
       type: ACTION_LABELS.completeFocus,
+      shortBreakDurationSeconds: shortBreakPhaseDuration,
+      longBreakDurationSeconds: longBreakPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -349,6 +356,8 @@ describe("state reducer function", () => {
 
     const newState = reducer(finishingState, {
       type: ACTION_LABELS.completeFocus,
+      shortBreakDurationSeconds: shortBreakPhaseDuration,
+      longBreakDurationSeconds: longBreakPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -585,6 +594,7 @@ describe("state reducer function", () => {
     const newState = reducer(runningState, {
       type: ACTION_LABELS.endSession,
       nowSeconds: newNowSeconds,
+      focusDurationSeconds: focusPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -627,6 +637,7 @@ describe("state reducer function", () => {
     const newState = reducer(completedSessionState, {
       type: ACTION_LABELS.endSession,
       nowSeconds,
+      focusDurationSeconds: focusPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -662,6 +673,7 @@ describe("state reducer function", () => {
     const newState = reducer(completedSessionState, {
       type: ACTION_LABELS.newSessionRound,
       nowSeconds,
+      focusDurationSeconds: focusPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -702,6 +714,7 @@ describe("state reducer function", () => {
     const newState = reducer(runningState, {
       type: ACTION_LABELS.endSession,
       nowSeconds: newNowSeconds,
+      focusDurationSeconds: focusPhaseDuration,
     });
 
     const expectedResult: PomodoroState = {
@@ -729,5 +742,52 @@ describe("state reducer function", () => {
     });
 
     expect(newState).toBe(initialState);
+  });
+
+  it("uses configured durations when creating new timer phases", () => {
+    const customShortBreakSeconds = 7 * 60;
+    const customLongBreakSeconds = 20 * 60;
+    const customFocusSeconds = 40 * 60;
+    const finishingFocusState: PomodoroState = {
+      ...POMODORO_INITIAL_STATE,
+      timerSession: {
+        ...POMODORO_INITIAL_STATE.timerSession,
+        status: "running",
+        startedAtSeconds: nowSeconds,
+        endsAtSeconds: nowSeconds + focusPhaseDuration,
+        sessionActive: true,
+      },
+    };
+
+    const breakState = reducer(finishingFocusState, {
+      type: ACTION_LABELS.completeFocus,
+      shortBreakDurationSeconds: customShortBreakSeconds,
+      longBreakDurationSeconds: customLongBreakSeconds,
+    });
+
+    expect(breakState.timerSession.timerDurationSeconds).toBe(
+      customShortBreakSeconds,
+    );
+
+    const completedBreakState: PomodoroState = {
+      ...breakState,
+      timerSession: {
+        ...breakState.timerSession,
+        status: "completed",
+        accumulatedActiveSeconds: customShortBreakSeconds,
+      },
+    };
+    const nextFocusState = reducer(completedBreakState, {
+      type: ACTION_LABELS.newSessionRound,
+      nowSeconds,
+      focusDurationSeconds: customFocusSeconds,
+    });
+
+    expect(nextFocusState.timerSession.timerDurationSeconds).toBe(
+      customFocusSeconds,
+    );
+    expect(nextFocusState.timerSession.endsAtSeconds).toBe(
+      nowSeconds + customFocusSeconds,
+    );
   });
 });

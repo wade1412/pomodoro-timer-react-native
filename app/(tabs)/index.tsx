@@ -16,11 +16,32 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const { colors, spacing } = theme;
 
 export default function FocusScreen() {
-  const [state, dispatch] = useReducer(reducer, POMODORO_INITIAL_STATE);
+  const {
+    dailyGoalSeconds,
+    focusDurationSeconds,
+    shortBreakDurationSeconds,
+    longBreakDurationSeconds,
+  } = useAppSettings();
+  const [state, dispatch] = useReducer(
+    reducer,
+    POMODORO_INITIAL_STATE,
+    (initialState) => ({
+      ...initialState,
+      timerSession: {
+        ...initialState.timerSession,
+        timerDurationSeconds: focusDurationSeconds,
+      },
+    }),
+  );
 
   const [nowSeconds, setNowSeconds] = useState<number | null>(null);
 
-  const { dailyGoalSeconds } = useAppSettings();
+  const getConfiguredPhaseDuration = () => {
+    if (state.timerSession.phase === "focus") return focusDurationSeconds;
+    if (state.timerSession.phase === "longBreak")
+      return longBreakDurationSeconds;
+    return shortBreakDurationSeconds;
+  };
 
   useEffect(() => {
     if (state.timerSession.status !== "running") return;
@@ -44,7 +65,11 @@ export default function FocusScreen() {
 
     if (nowSeconds >= state.timerSession.endsAtSeconds) {
       if (state.timerSession.phase === "focus") {
-        dispatch({ type: ACTION_LABELS.completeFocus });
+        dispatch({
+          type: ACTION_LABELS.completeFocus,
+          shortBreakDurationSeconds,
+          longBreakDurationSeconds,
+        });
       } else {
         dispatch({ type: ACTION_LABELS.endBreak, nowSeconds });
       }
@@ -54,6 +79,8 @@ export default function FocusScreen() {
     state.timerSession.endsAtSeconds,
     state.timerSession.phase,
     nowSeconds,
+    shortBreakDurationSeconds,
+    longBreakDurationSeconds,
   ]);
 
   const formattedDate = new Date().toLocaleDateString("en-US", {
@@ -70,6 +97,7 @@ export default function FocusScreen() {
     dispatch({
       type: ACTION_LABELS.startOrResumePhase,
       nowSeconds: dateNowSeconds,
+      phaseDurationSeconds: getConfiguredPhaseDuration(),
     });
   };
 
@@ -82,7 +110,11 @@ export default function FocusScreen() {
   const onTimerReset = () => {
     const dateNowSeconds = Math.floor(Date.now() / 1000);
 
-    dispatch({ type: ACTION_LABELS.resetTimer, nowSeconds: dateNowSeconds });
+    dispatch({
+      type: ACTION_LABELS.resetTimer,
+      nowSeconds: dateNowSeconds,
+      phaseDurationSeconds: getConfiguredPhaseDuration(),
+    });
   };
 
   const onAddBreakTime = () => {
@@ -106,12 +138,17 @@ export default function FocusScreen() {
     dispatch({
       type: ACTION_LABELS.newSessionRound,
       nowSeconds: dateNowSeconds,
+      focusDurationSeconds,
     });
   };
 
   const onEndSession = () => {
     const dateNowSeconds = Math.floor(Date.now() / 1000);
-    dispatch({ type: ACTION_LABELS.endSession, nowSeconds: dateNowSeconds });
+    dispatch({
+      type: ACTION_LABELS.endSession,
+      nowSeconds: dateNowSeconds,
+      focusDurationSeconds,
+    });
   };
 
   const timerButtonText = [
