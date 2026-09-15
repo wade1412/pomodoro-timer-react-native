@@ -1,95 +1,176 @@
+import DurationPickerSheet from "@/components/Settings/DurationPickerSheet";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import SettingsTitle from "@/components/ui/SettingsTitle";
+import {
+  FOCUS_MINUTES_OPTIONS,
+  LONG_BREAK_MINUTES_OPTIONS,
+  SHORT_BREAK_MINUTES_OPTIONS,
+} from "@/constants/settings.constants";
 import { theme } from "@/constants/theme";
+import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { colors, typography, spacing, radius } = theme;
 
+type DurationSetting = "focus" | "shortBreak" | "longBreak";
+
+const DURATION_CONFIG = {
+  focus: { title: "Focus Duration", options: FOCUS_MINUTES_OPTIONS },
+  shortBreak: { title: "Short Break", options: SHORT_BREAK_MINUTES_OPTIONS },
+  longBreak: { title: "Long Break", options: LONG_BREAK_MINUTES_OPTIONS },
+} as const;
+
+interface DurationRowProps {
+  title: string;
+  subtitle: string;
+  durationSeconds: number;
+  onPress: () => void;
+}
+
+function DurationRow({
+  title,
+  subtitle,
+  durationSeconds,
+  onPress,
+}: DurationRowProps) {
+  return (
+    <Pressable
+      accessibilityHint="Opens a duration picker"
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.selectionContainer,
+        pressed && styles.selectionContainerPressed,
+      ]}
+    >
+      <SettingsTitle title={title} subtitle={subtitle} />
+      <Text style={styles.settingValue}>{durationSeconds / 60} minutes</Text>
+    </Pressable>
+  );
+}
+
 export default function SettingsScreen() {
+  const {
+    focusDurationSeconds,
+    shortBreakDurationSeconds,
+    longBreakDurationSeconds,
+    updateFocusDurationSeconds,
+    updateShortBreakDurationSeconds,
+    updateLongBreakDurationSeconds,
+  } = useAppSettings();
+  const [activePicker, setActivePicker] =
+    useState<DurationSetting | null>(null);
+  const [draftMinutes, setDraftMinutes] = useState(0);
   const tabBarHeight = useBottomTabBarHeight();
 
+  const openDurationPicker = (
+    setting: DurationSetting,
+    durationSeconds: number,
+  ) => {
+    setDraftMinutes(durationSeconds / 60);
+    setActivePicker(setting);
+  };
+
+  const closeDurationPicker = () => setActivePicker(null);
+
+  const confirmDuration = () => {
+    const durationSeconds = draftMinutes * 60;
+
+    if (activePicker === "focus") {
+      updateFocusDurationSeconds(durationSeconds);
+    } else if (activePicker === "shortBreak") {
+      updateShortBreakDurationSeconds(durationSeconds);
+    } else if (activePicker === "longBreak") {
+      updateLongBreakDurationSeconds(durationSeconds);
+    }
+
+    closeDurationPicker();
+  };
+
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.mainContainer,
-          { paddingBottom: tabBarHeight + spacing.md },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.contentColumn}>
-          <ScreenHeader title="Settings" subtitle="Customize your experience" />
-
-          <View style={styles.selectionContainer}>
-            <SettingsTitle
-              title="Focus Duration"
-              subtitle="Standard Pomodoro"
+    <>
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.mainContainer,
+            { paddingBottom: tabBarHeight + spacing.md },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.contentColumn}>
+            <ScreenHeader
+              title="Settings"
+              subtitle="Customize your experience"
             />
 
-            <Pressable style={styles.settingPressable} hitSlop={8}>
-              <Text style={styles.settingPressableText}>25 minutes</Text>
-            </Pressable>
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>TIMER</Text>
+              <DurationRow
+                durationSeconds={focusDurationSeconds}
+                onPress={() =>
+                  openDurationPicker("focus", focusDurationSeconds)
+                }
+                subtitle="Standard Pomodoro"
+                title="Focus Duration"
+              />
+              <DurationRow
+                durationSeconds={shortBreakDurationSeconds}
+                onPress={() =>
+                  openDurationPicker("shortBreak", shortBreakDurationSeconds)
+                }
+                subtitle="After each round"
+                title="Short Break"
+              />
+              <DurationRow
+                durationSeconds={longBreakDurationSeconds}
+                onPress={() =>
+                  openDurationPicker("longBreak", longBreakDurationSeconds)
+                }
+                subtitle="After 4 rounds"
+                title="Long Break"
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>FEEDBACK</Text>
+              {[
+                ["Sound Alerts", "Play sound when timer ends"],
+                ["Vibration", "Haptic feedback"],
+                ["Auto-start breaks", "Automatically start break timer"],
+              ].map(([title, subtitle]) => (
+                <View key={title} style={styles.selectionContainer}>
+                  <SettingsTitle title={title} subtitle={subtitle} />
+                  <Text style={styles.settingValue}>On</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.hintContainer}>
+              <Text style={styles.hintTitle}>ABOUT</Text>
+              <Text style={styles.hint}>
+                The Pomodoro Technique is a simple time-management method that
+                breaks work into focused intervals followed by short breaks.
+              </Text>
+            </View>
           </View>
+        </ScrollView>
+      </SafeAreaView>
 
-          <View style={styles.selectionContainer}>
-            <SettingsTitle title="Short Break" subtitle="After each round" />
-
-            <Pressable style={styles.settingPressable} hitSlop={8}>
-              <Text style={styles.settingPressableText}>5 minutes</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.selectionContainer}>
-            <SettingsTitle title="Long Break" subtitle="After 4 rounds" />
-
-            <Pressable style={styles.settingPressable} hitSlop={8}>
-              <Text style={styles.settingPressableText}>15 minutes</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.selectionContainer}>
-            <SettingsTitle
-              title="Sound Alerts"
-              subtitle="Play sound when timer ends"
-            />
-
-            <Pressable style={styles.settingPressable} hitSlop={8}>
-              <Text style={styles.settingPressableText}>On</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.selectionContainer}>
-            <SettingsTitle title="Vibration" subtitle="Haptic feedback" />
-
-            <Pressable style={styles.settingPressable} hitSlop={8}>
-              <Text style={styles.settingPressableText}>On</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.selectionContainer}>
-            <SettingsTitle
-              title="Auto-start breaks"
-              subtitle="Automatically start break timer"
-            />
-
-            <Pressable style={styles.settingPressable} hitSlop={8}>
-              <Text style={styles.settingPressableText}>On</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.hintContainer}>
-            <Text style={styles.hintTitle}>ABOUT</Text>
-            <Text style={styles.hint}>
-              The Pomodoro Technique is a simple time-management method that
-              breaks work into 25-minute focused intervals followed by short
-              5-minute breaks
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <DurationPickerSheet
+        onCancel={closeDurationPicker}
+        onConfirm={confirmDuration}
+        onValueChange={setDraftMinutes}
+        optionsMinutes={
+          activePicker ? DURATION_CONFIG[activePicker].options : []
+        }
+        title={activePicker ? DURATION_CONFIG[activePicker].title : "Duration"}
+        valueMinutes={draftMinutes}
+        visible={activePicker !== null}
+      />
+    </>
   );
 }
 
@@ -107,43 +188,53 @@ const styles = StyleSheet.create({
   contentColumn: {
     width: "100%",
     maxWidth: 500,
-    gap: spacing.md,
+    gap: spacing.xl,
+  },
+  section: {
+    gap: spacing.sm,
+  },
+  sectionLabel: {
+    ...typography.sectionTitle,
+    paddingHorizontal: spacing.sm,
+    color: colors.textMuted,
+    letterSpacing: 1,
   },
   selectionContainer: {
-    flexDirection: "row",
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
     width: "100%",
+    minHeight: 76,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    justifyContent: "space-between",
-    alignItems: "center",
   },
-  settingPressable: {
-    minHeight: 44,
-    minWidth: 44,
-    alignItems: "flex-end",
-    justifyContent: "center",
+  selectionContainerPressed: {
+    backgroundColor: colors.surfaceElevated,
   },
-  settingPressableText: {
-    ...typography.button,
+  settingValue: {
+    ...typography.body,
+    flexShrink: 0,
     color: colors.focus,
   },
   hintContainer: {
-    marginTop: spacing.md,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    padding: spacing.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
   },
   hintTitle: {
     ...typography.sectionTitle,
     color: colors.textSecondary,
+    letterSpacing: 1,
   },
   hint: {
-    ...typography.body,
-    fontSize: 13,
-    fontWeight: "400",
+    ...typography.caption,
     color: colors.textMuted,
   },
 });
