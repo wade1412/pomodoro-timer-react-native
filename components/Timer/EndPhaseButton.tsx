@@ -2,7 +2,7 @@ import { theme } from "@/constants/theme";
 import { StyleSheet, Text } from "react-native";
 import AnimatedPressable from "../ui/AnimatedPressable";
 
-const { colors, typography, radius, spacing } = theme;
+const { colors, typography, radius } = theme;
 
 interface EndPhaseButtonProps {
   isRoundEnd?: boolean;

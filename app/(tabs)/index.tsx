@@ -13,12 +13,12 @@ import { useEffect, useReducer, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { colors, typography, spacing } = theme;
+const { colors, spacing } = theme;
 
 export default function FocusScreen() {
   const [state, dispatch] = useReducer(reducer, POMODORO_INITIAL_STATE);
 
-  const [nowSeconds, setNowSeconds] = useState(Math.floor(Date.now() / 1000));
+  const [nowSeconds, setNowSeconds] = useState<number | null>(null);
 
   const { dailyGoalSeconds } = useAppSettings();
 
@@ -37,12 +37,17 @@ export default function FocusScreen() {
   useEffect(() => {
     if (
       state.timerSession.status !== "running" ||
-      !state.timerSession.endsAtSeconds
+      !state.timerSession.endsAtSeconds ||
+      nowSeconds === null
     )
       return;
 
     if (nowSeconds >= state.timerSession.endsAtSeconds) {
-      state.timerSession.phase === "focus" ? onFocusComplete() : onBreakEnd();
+      if (state.timerSession.phase === "focus") {
+        dispatch({ type: ACTION_LABELS.completeFocus });
+      } else {
+        dispatch({ type: ACTION_LABELS.endBreak, nowSeconds });
+      }
     }
   }, [
     state.timerSession.status,
@@ -78,10 +83,6 @@ export default function FocusScreen() {
     const dateNowSeconds = Math.floor(Date.now() / 1000);
 
     dispatch({ type: ACTION_LABELS.resetTimer, nowSeconds: dateNowSeconds });
-  };
-
-  const onFocusComplete = () => {
-    dispatch({ type: ACTION_LABELS.completeFocus });
   };
 
   const onAddBreakTime = () => {
@@ -124,7 +125,7 @@ export default function FocusScreen() {
 
   const effectiveElapsedSeconds = getEffectiveElapsedSeconds(
     state.timerSession,
-    nowSeconds,
+    nowSeconds ?? 0,
   );
 
   const tabBarHeight = useBottomTabBarHeight();

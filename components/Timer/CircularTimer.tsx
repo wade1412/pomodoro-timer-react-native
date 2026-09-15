@@ -71,7 +71,7 @@ export default function CircularTimer({
     animatedProgress.value = withTiming(progress, {
       duration: 300,
     });
-  }, [progress]);
+  }, [animatedProgress, progress]);
   const animatedProps = useAnimatedProps(() => {
     return {
       strokeDashoffset: circleCircumference * (1 - animatedProgress.value),
@@ -101,7 +101,7 @@ export default function CircularTimer({
     return () => {
       cancelAnimation(pulseAnimationProgress);
     };
-  }, [status]);
+  }, [pulseAnimationProgress, status]);
   const glowAnimatedStyle = useAnimatedStyle(() => {
     const scale = 1 + pulseAnimationProgress.value * 0.05;
     const opacity = pulseAnimationProgress.value * 0.14;

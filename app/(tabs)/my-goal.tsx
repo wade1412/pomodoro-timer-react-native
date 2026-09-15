@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
   },
+
   contentColumn: {
     width: "100%",
     maxWidth: 320,
@@ -275,6 +276,7 @@ const styles = StyleSheet.create({
   },
 
   hintContainer: {
+    marginTop: spacing.md,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.lg,

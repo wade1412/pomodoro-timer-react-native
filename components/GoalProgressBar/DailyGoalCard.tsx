@@ -47,7 +47,7 @@ export default function DailyGoalCard({
     animatedProgress.value = withTiming(progress, {
       duration: 300,
     });
-  }, [progress]);
+  }, [animatedProgress, progress]);
 
   const animatedWidth = useAnimatedStyle(() => ({
     width: `${animatedProgress.value * 100}%`,

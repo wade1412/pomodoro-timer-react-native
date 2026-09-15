@@ -30,13 +30,6 @@ export default function AnimatedPressable({
 }: AnimatedPressableProps) {
   const pressProgress = useSharedValue(0);
 
-  useEffect(() => {
-    if (!disabled) return;
-
-    cancelAnimation(pressProgress);
-    pressProgress.value = withTiming(0, { duration: 100 });
-  }, [disabled]);
-
   const animatedStyle = useAnimatedStyle(() => {
     const scale = 1 - pressProgress.value * 0.03;
     const opacity = 1 - pressProgress.value * 0.1;
@@ -61,6 +54,13 @@ export default function AnimatedPressable({
     pressProgress.value = withSpring(0, { damping: 12, stiffness: 300 });
     onPressOut?.(event);
   };
+
+  useEffect(() => {
+    if (!disabled) return;
+
+    cancelAnimation(pressProgress);
+    pressProgress.value = withTiming(0, { duration: 100 });
+  }, [disabled, pressProgress]);
 
   return (
     <Animated.View style={[containerStyle, animatedStyle]}>
