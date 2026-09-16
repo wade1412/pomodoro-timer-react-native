@@ -16,7 +16,19 @@ export type TimerSession = {
   endsAtSeconds: null | number;
 };
 
-export type TrackedValues = {
+export type DateKey = string;
+
+export type DailyTracking = {
+  dateKey: DateKey;
+  completedRounds: number;
+  focusSeconds: number;
+  breakSeconds: number;
+  updatedAtSeconds: number;
+};
+
+export type TrackingHistory = Record<DateKey, DailyTracking>;
+
+export type TrackingDelta = {
   completedRounds: number;
   focusSeconds: number;
   breakSeconds: number;
@@ -24,7 +36,7 @@ export type TrackedValues = {
 
 export type PomodoroState = {
   timerSession: TimerSession;
-  trackedValues: TrackedValues;
+  trackingHistory: TrackingHistory;
 };
 
 export const DEFAULT_TIMER_SESSION: TimerSession = {
@@ -39,13 +51,9 @@ export const DEFAULT_TIMER_SESSION: TimerSession = {
   endsAtSeconds: null,
 };
 
-export const DEFAULT_TRACKED_VALUES: TrackedValues = {
-  completedRounds: 0,
-  focusSeconds: 0,
-  breakSeconds: 0,
-};
+export const DEFAULT_TRACKING_HISTORY: TrackingHistory = {};
 
 export const POMODORO_INITIAL_STATE: PomodoroState = {
   timerSession: DEFAULT_TIMER_SESSION,
-  trackedValues: DEFAULT_TRACKED_VALUES,
+  trackingHistory: DEFAULT_TRACKING_HISTORY,
 };
