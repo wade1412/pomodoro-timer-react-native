@@ -1,5 +1,6 @@
 import { theme } from "@/constants/theme";
 import { AppSettingsProvider } from "@/providers/AppSettingsProvider";
+import { PomodoroProvider } from "@/providers/PomodoroProvider";
 import { useFonts } from "expo-font";
 import { DarkTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -62,10 +63,12 @@ function RootLayoutNav() {
     <ThemeProvider value={navigationTheme}>
       <StatusBar style="light" />
       <AppSettingsProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-        </Stack>
+        <PomodoroProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          </Stack>
+        </PomodoroProvider>
       </AppSettingsProvider>
     </ThemeProvider>
   );
