@@ -35,6 +35,7 @@ export type ReducerAction =
     }
   | {
       type: typeof ACTION_LABELS.completeFocus;
+      nowSeconds: number;
       shortBreakDurationSeconds: number;
       longBreakDurationSeconds: number;
     }
@@ -191,7 +192,8 @@ export const getReconciledElapsedSeconds = (
   nowSeconds: number,
 ) => {
   const newAccumulated =
-    timerSession.status === "running" && timerSession.startedAtSeconds
+    timerSession.status === "running" &&
+    timerSession.startedAtSeconds !== null
       ? getEffectiveElapsedSeconds(timerSession, nowSeconds)
       : timerSession.accumulatedActiveSeconds;
 

@@ -1,7 +1,9 @@
+import { breakExtensionDuration } from "@/constants/timer.constants";
 import {
-  breakExtensionDuration,
-} from "@/constants/timer.constants";
-import { DEFAULT_TIMER_SESSION, PomodoroState } from "@/constants/types";
+  DEFAULT_TIMER_SESSION,
+  PomodoroState,
+  TrackingDelta,
+} from "@/constants/types";
 import {
   ACTION_LABELS,
   getReconciledElapsedSeconds,
@@ -9,7 +11,46 @@ import {
   validateReducerAction,
   validateTimerStatus,
 } from "@/state/reducer.helpers";
-import { getEffectiveElapsedSeconds } from "@/utils/timer";
+import {
+  getLocalDateKey,
+  updateTrackingHistory,
+} from "@/state/tracking.helpers";
+
+const updateHistoryForCurrentSegment = (
+  state: PomodoroState,
+  nowSeconds: number,
+  completedRounds = 0,
+) => {
+  const reconciledSeconds = getReconciledElapsedSeconds(
+    state.timerSession,
+    nowSeconds,
+  );
+  const newSegmentSeconds =
+    state.timerSession.status === "running"
+      ? Math.max(
+          0,
+          reconciledSeconds - state.timerSession.accumulatedActiveSeconds,
+        )
+      : 0;
+
+  if (newSegmentSeconds === 0 && completedRounds === 0) {
+    return state.trackingHistory;
+  }
+
+  const isFocusPhase = state.timerSession.phase === "focus";
+  const delta: TrackingDelta = {
+    completedRounds,
+    focusSeconds: isFocusPhase ? newSegmentSeconds : 0,
+    breakSeconds: isFocusPhase ? 0 : newSegmentSeconds,
+  };
+
+  return updateTrackingHistory(
+    state.trackingHistory,
+    getLocalDateKey(nowSeconds),
+    delta,
+    nowSeconds,
+  );
+};
 
 export function reducer(
   state: PomodoroState,
@@ -27,23 +68,20 @@ export function reducer(
         return state;
       }
 
-      const remainingDuration =
-        (state.timerSession.status === "ready"
+      const phaseDurationSeconds =
+        state.timerSession.status === "ready"
           ? action.phaseDurationSeconds
-          : state.timerSession.timerDurationSeconds) -
-        state.timerSession.accumulatedActiveSeconds;
-      const newEndsAt = action.nowSeconds + remainingDuration;
+          : state.timerSession.timerDurationSeconds;
+      const remainingDuration =
+        phaseDurationSeconds - state.timerSession.accumulatedActiveSeconds;
 
       return {
         ...state,
         timerSession: {
           ...state.timerSession,
-          timerDurationSeconds:
-            state.timerSession.status === "ready"
-              ? action.phaseDurationSeconds
-              : state.timerSession.timerDurationSeconds,
+          timerDurationSeconds: phaseDurationSeconds,
           startedAtSeconds: action.nowSeconds,
-          endsAtSeconds: newEndsAt,
+          endsAtSeconds: action.nowSeconds + remainingDuration,
           status: "running",
           sessionActive: true,
         },
@@ -53,12 +91,9 @@ export function reducer(
     case ACTION_LABELS.pausePhase: {
       if (
         !validateTimerStatus(state.timerSession) ||
-        !validateReducerAction(state.timerSession, ACTION_LABELS.pausePhase)
+        !validateReducerAction(state.timerSession, ACTION_LABELS.pausePhase) ||
+        state.timerSession.startedAtSeconds === null
       ) {
-        return state;
-      }
-
-      if (!state.timerSession.startedAtSeconds) {
         return state;
       }
 
@@ -68,7 +103,10 @@ export function reducer(
       );
 
       return {
-        ...state,
+        trackingHistory: updateHistoryForCurrentSegment(
+          state,
+          action.nowSeconds,
+        ),
         timerSession: {
           ...state.timerSession,
           accumulatedActiveSeconds: newAccumulatedSeconds,
@@ -87,29 +125,11 @@ export function reducer(
         return state;
       }
 
-      const isRunning = state.timerSession.status === "running";
-      const isFocusPhase = state.timerSession.phase === "focus";
-
-      // Calculate accumulated seconds for running status; for paused get it from the state
-      const newAccumulatedSeconds =
-        isRunning && state.timerSession.startedAtSeconds !== null
-          ? getEffectiveElapsedSeconds(state.timerSession, action.nowSeconds)
-          : state.timerSession.accumulatedActiveSeconds;
-
-      const newTrackedValues = isFocusPhase
-        ? {
-            ...state.trackedValues,
-            focusSeconds:
-              state.trackedValues.focusSeconds + newAccumulatedSeconds,
-          }
-        : {
-            ...state.trackedValues,
-            breakSeconds:
-              state.trackedValues.breakSeconds + newAccumulatedSeconds,
-          };
-
       return {
-        trackedValues: newTrackedValues,
+        trackingHistory: updateHistoryForCurrentSegment(
+          state,
+          action.nowSeconds,
+        ),
         timerSession: {
           ...state.timerSession,
           status: "ready",
@@ -135,28 +155,26 @@ export function reducer(
         state.timerSession.timerDurationSeconds + breakExtensionDuration;
 
       if (state.timerSession.status === "running") {
-        if (!state.timerSession.startedAtSeconds) {
-          return state;
-        }
+        if (state.timerSession.startedAtSeconds === null) return state;
 
         const newAccumulatedSeconds = getReconciledElapsedSeconds(
           state.timerSession,
           action.nowSeconds,
         );
 
-        const remainingDuration = newDuration - newAccumulatedSeconds;
-        const newEndsAt = action.nowSeconds + remainingDuration;
-
-        // updating startedAt to reconcile timer
         return {
-          ...state,
+          trackingHistory: updateHistoryForCurrentSegment(
+            state,
+            action.nowSeconds,
+          ),
           timerSession: {
             ...state.timerSession,
             startedAtSeconds: action.nowSeconds,
             accumulatedActiveSeconds: newAccumulatedSeconds,
             breakExtended: true,
             timerDurationSeconds: newDuration,
-            endsAtSeconds: newEndsAt,
+            endsAtSeconds:
+              action.nowSeconds + newDuration - newAccumulatedSeconds,
           },
         };
       }
@@ -182,18 +200,12 @@ export function reducer(
       const newCompletedRounds = state.timerSession.currentRoundNumber + 1;
       const isLongBreakNext = newCompletedRounds % 4 === 0;
 
-      const newCompletedTrackedRounds = state.trackedValues.completedRounds + 1;
-      const newTrackedFocusSeconds =
-        state.trackedValues.focusSeconds +
-        state.timerSession.timerDurationSeconds;
-
-      // Return next timer phase with "ready"
       return {
-        trackedValues: {
-          ...state.trackedValues,
-          completedRounds: newCompletedTrackedRounds,
-          focusSeconds: newTrackedFocusSeconds,
-        },
+        trackingHistory: updateHistoryForCurrentSegment(
+          state,
+          action.nowSeconds,
+          1,
+        ),
         timerSession: {
           ...state.timerSession,
           currentRoundNumber: newCompletedRounds,
@@ -218,20 +230,16 @@ export function reducer(
         return state;
       }
 
-      // Calculate new accumulatedSeconds if its running, get from state if its paused
       const newAccumulatedSeconds = getReconciledElapsedSeconds(
         state.timerSession,
         action.nowSeconds,
       );
 
-      const newTrackedBreakSeconds =
-        state.trackedValues.breakSeconds + newAccumulatedSeconds;
-
       return {
-        trackedValues: {
-          ...state.trackedValues,
-          breakSeconds: newTrackedBreakSeconds,
-        },
+        trackingHistory: updateHistoryForCurrentSegment(
+          state,
+          action.nowSeconds,
+        ),
         timerSession: {
           ...state.timerSession,
           status: "completed",
@@ -254,9 +262,6 @@ export function reducer(
         return state;
       }
 
-      const newSessionEndsAt =
-        action.nowSeconds + action.focusDurationSeconds;
-
       return {
         ...state,
         timerSession: {
@@ -268,12 +273,12 @@ export function reducer(
           breakExtended: false,
           sessionActive: true,
           startedAtSeconds: action.nowSeconds,
-          endsAtSeconds: newSessionEndsAt,
+          endsAtSeconds: action.nowSeconds + action.focusDurationSeconds,
         },
       };
     }
 
-    case ACTION_LABELS.endSession:
+    case ACTION_LABELS.endSession: {
       if (
         !validateTimerStatus(state.timerSession) ||
         !validateReducerAction(state.timerSession, ACTION_LABELS.endSession)
@@ -281,37 +286,17 @@ export function reducer(
         return state;
       }
 
-      const isFocusPhase = state.timerSession.phase === "focus";
-
-      // Calculate new accumulated seconds on running, get it from state on paused
-      const newAccumulatedSeconds = getReconciledElapsedSeconds(
-        state.timerSession,
-        action.nowSeconds,
-      );
-
-      // On completed status return previous tracked valued to avoid duplicate tracking
-      const newTrackedValues =
-        state.timerSession.status === "completed"
-          ? { ...state.trackedValues }
-          : isFocusPhase
-            ? {
-                ...state.trackedValues,
-                focusSeconds:
-                  state.trackedValues.focusSeconds + newAccumulatedSeconds,
-              }
-            : {
-                ...state.trackedValues,
-                breakSeconds:
-                  state.trackedValues.breakSeconds + newAccumulatedSeconds,
-              };
-
       return {
-        trackedValues: newTrackedValues,
+        trackingHistory: updateHistoryForCurrentSegment(
+          state,
+          action.nowSeconds,
+        ),
         timerSession: {
           ...DEFAULT_TIMER_SESSION,
           timerDurationSeconds: action.focusDurationSeconds,
         },
       };
+    }
 
     default:
       return state;
