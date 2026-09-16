@@ -1,5 +1,6 @@
 import { theme } from "@/constants/theme";
 import { PomodoroState } from "@/constants/types";
+import { createEmptyDailyTracking } from "@/state/tracking.helpers";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -15,25 +16,33 @@ interface DailyGoalCardProps {
   state: PomodoroState;
   elapsedSeconds: number;
   dailyGoalSeconds: number;
+  dateKey: string;
 }
 
 export default function DailyGoalCard({
   state,
   elapsedSeconds,
   dailyGoalSeconds,
+  dateKey,
 }: DailyGoalCardProps) {
-  const { trackedValues, timerSession } = state;
-  const { breakSeconds, completedRounds, focusSeconds } = trackedValues;
+  const { trackingHistory, timerSession } = state;
+  const dailyTracking =
+    trackingHistory[dateKey] ?? createEmptyDailyTracking(dateKey);
+  const { breakSeconds, completedRounds, focusSeconds } = dailyTracking;
+  const activeSegmentSeconds =
+    timerSession.status === "running"
+      ? Math.max(0, elapsedSeconds - timerSession.accumulatedActiveSeconds)
+      : 0;
 
   const totalFocusSeconds =
     timerSession.phase === "focus" && timerSession.status !== "completed"
-      ? focusSeconds + elapsedSeconds
+      ? focusSeconds + activeSegmentSeconds
       : focusSeconds;
   const displayFocusMinutes = Math.floor(totalFocusSeconds / 60);
 
   const totalBreakSeconds =
     timerSession.phase !== "focus" && timerSession.status !== "completed"
-      ? breakSeconds + elapsedSeconds
+      ? breakSeconds + activeSegmentSeconds
       : breakSeconds;
   const displayBreakMinutes = Math.floor(totalBreakSeconds / 60);
 

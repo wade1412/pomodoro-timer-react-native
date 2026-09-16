@@ -3,17 +3,18 @@ import CircularTimer from "@/components/Timer/CircularTimer";
 import TimerControls from "@/components/Timer/TimerControls";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { theme } from "@/constants/theme";
-import { POMODORO_INITIAL_STATE } from "@/constants/types";
 import { useAppSettings } from "@/providers/AppSettingsProvider";
-import { reducer } from "@/state/pomodoroReducer";
+import { usePomodoroContext } from "@/providers/PomodoroProvider";
 import { ACTION_LABELS } from "@/state/reducer.helpers";
+import { getLocalDateKey } from "@/state/tracking.helpers";
 import { getEffectiveElapsedSeconds } from "@/utils/timer";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { colors, spacing } = theme;
+const INITIAL_NOW_SECONDS = Math.floor(Date.now() / 1000);
 
 export default function FocusScreen() {
   const {
@@ -22,19 +23,8 @@ export default function FocusScreen() {
     shortBreakDurationSeconds,
     longBreakDurationSeconds,
   } = useAppSettings();
-  const [state, dispatch] = useReducer(
-    reducer,
-    POMODORO_INITIAL_STATE,
-    (initialState) => ({
-      ...initialState,
-      timerSession: {
-        ...initialState.timerSession,
-        timerDurationSeconds: focusDurationSeconds,
-      },
-    }),
-  );
-
-  const [nowSeconds, setNowSeconds] = useState<number | null>(null);
+  const { state, dispatch } = usePomodoroContext();
+  const [nowSeconds, setNowSeconds] = useState(INITIAL_NOW_SECONDS);
 
   const getConfiguredPhaseDuration = () => {
     if (state.timerSession.phase === "focus") return focusDurationSeconds;
@@ -58,8 +48,7 @@ export default function FocusScreen() {
   useEffect(() => {
     if (
       state.timerSession.status !== "running" ||
-      !state.timerSession.endsAtSeconds ||
-      nowSeconds === null
+      !state.timerSession.endsAtSeconds
     )
       return;
 
@@ -67,6 +56,7 @@ export default function FocusScreen() {
       if (state.timerSession.phase === "focus") {
         dispatch({
           type: ACTION_LABELS.completeFocus,
+          nowSeconds,
           shortBreakDurationSeconds,
           longBreakDurationSeconds,
         });
@@ -81,6 +71,7 @@ export default function FocusScreen() {
     nowSeconds,
     shortBreakDurationSeconds,
     longBreakDurationSeconds,
+    dispatch,
   ]);
 
   const formattedDate = new Date().toLocaleDateString("en-US", {
@@ -162,7 +153,7 @@ export default function FocusScreen() {
 
   const effectiveElapsedSeconds = getEffectiveElapsedSeconds(
     state.timerSession,
-    nowSeconds ?? 0,
+    nowSeconds,
   );
 
   const tabBarHeight = useBottomTabBarHeight();
@@ -186,6 +177,7 @@ export default function FocusScreen() {
             state={state}
             elapsedSeconds={effectiveElapsedSeconds}
             dailyGoalSeconds={dailyGoalSeconds}
+            dateKey={getLocalDateKey(nowSeconds)}
           />
 
           {/* Timer Area */}

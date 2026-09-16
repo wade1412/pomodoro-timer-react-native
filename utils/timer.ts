@@ -11,12 +11,12 @@ export const getEffectiveElapsedSeconds = (
     accumulatedActiveSeconds,
   } = timerSession;
 
-  if (startedAtSeconds && dateNowSeconds < startedAtSeconds) {
+  if (startedAtSeconds !== null && dateNowSeconds < startedAtSeconds) {
     return Math.min(timerDurationSeconds, accumulatedActiveSeconds);
   }
 
   if (status === "running") {
-    if (!startedAtSeconds) return accumulatedActiveSeconds;
+    if (startedAtSeconds === null) return accumulatedActiveSeconds;
     return Math.min(
       timerDurationSeconds,
       Math.max(dateNowSeconds - startedAtSeconds + accumulatedActiveSeconds, 0),
