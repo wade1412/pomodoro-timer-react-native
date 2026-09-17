@@ -1,4 +1,3 @@
-import { getEffectiveElapsedSeconds } from "@/utils/timer";
 import { TimerPhase, TimerSession, TimerStatus } from "../constants/types";
 
 export const ACTION_LABELS = {
@@ -187,15 +186,3 @@ export const validateReducerAction = (
   return false;
 };
 
-export const getReconciledElapsedSeconds = (
-  timerSession: TimerSession,
-  nowSeconds: number,
-) => {
-  const newAccumulated =
-    timerSession.status === "running" &&
-    timerSession.startedAtSeconds !== null
-      ? getEffectiveElapsedSeconds(timerSession, nowSeconds)
-      : timerSession.accumulatedActiveSeconds;
-
-  return Math.min(newAccumulated, timerSession.timerDurationSeconds);
-};

@@ -6,7 +6,6 @@ import {
 } from "@/constants/types";
 import {
   ACTION_LABELS,
-  getReconciledElapsedSeconds,
   ReducerAction,
   validateReducerAction,
   validateTimerStatus,
@@ -15,13 +14,14 @@ import {
   getLocalDateKey,
   updateTrackingHistory,
 } from "@/state/tracking.helpers";
+import { getEffectiveElapsedSeconds } from "@/utils/timer";
 
 const updateHistoryForCurrentSegment = (
   state: PomodoroState,
   nowSeconds: number,
   completedRounds = 0,
 ) => {
-  const reconciledSeconds = getReconciledElapsedSeconds(
+  const reconciledSeconds = getEffectiveElapsedSeconds(
     state.timerSession,
     nowSeconds,
   );
@@ -97,7 +97,7 @@ export function reducer(
         return state;
       }
 
-      const newAccumulatedSeconds = getReconciledElapsedSeconds(
+      const newAccumulatedSeconds = getEffectiveElapsedSeconds(
         state.timerSession,
         action.nowSeconds,
       );
@@ -157,7 +157,7 @@ export function reducer(
       if (state.timerSession.status === "running") {
         if (state.timerSession.startedAtSeconds === null) return state;
 
-        const newAccumulatedSeconds = getReconciledElapsedSeconds(
+        const newAccumulatedSeconds = getEffectiveElapsedSeconds(
           state.timerSession,
           action.nowSeconds,
         );
@@ -230,7 +230,7 @@ export function reducer(
         return state;
       }
 
-      const newAccumulatedSeconds = getReconciledElapsedSeconds(
+      const newAccumulatedSeconds = getEffectiveElapsedSeconds(
         state.timerSession,
         action.nowSeconds,
       );

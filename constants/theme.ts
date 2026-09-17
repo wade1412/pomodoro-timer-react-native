@@ -15,6 +15,14 @@ export const theme = {
     focusPressed: "#D96D48",
     focusSoft: "#4A2D27", // focus bg, glow
 
+    // goalProgress
+    goalProgressColors: {
+      under25: "#1A191F", // < 25%
+      from25To50: "#793D26", // 25–50%
+      from50To99: "#B55F2F", // 50–99%
+      reached: "#E7815A", // goal reached
+    },
+
     // Break
     break: "#43D3B5",
     breakPressed: "#2ea791",

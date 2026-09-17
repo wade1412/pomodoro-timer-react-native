@@ -7,7 +7,6 @@ import {
   QUICK_GOAL_PRESETS_SECONDS,
 } from "@/constants/goal.constants";
 import { theme } from "@/constants/theme";
-
 import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { useState } from "react";
