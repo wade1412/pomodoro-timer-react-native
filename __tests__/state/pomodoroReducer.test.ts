@@ -58,6 +58,27 @@ const createRunningState = ({
 });
 
 describe("pomodoro reducer", () => {
+  it("hydrates only tracking history without changing the timer session", () => {
+    const runningState = createRunningState();
+    const hydratedHistory = {
+      "2026-09-18": {
+        dateKey: "2026-09-18",
+        completedRounds: 2,
+        focusSeconds: 3_000,
+        breakSeconds: 600,
+        updatedAtSeconds: 1_790_024_800,
+      },
+    };
+
+    const nextState = reducer(runningState, {
+      type: ACTION_LABELS.hydrateTrackingHistory,
+      trackingHistory: hydratedHistory,
+    });
+
+    expect(nextState.trackingHistory).toBe(hydratedHistory);
+    expect(nextState.timerSession).toBe(runningState.timerSession);
+  });
+
   it("starts a ready timer with the configured duration", () => {
     const durationSeconds = 40 * 60;
     const state = reducer(POMODORO_INITIAL_STATE, {

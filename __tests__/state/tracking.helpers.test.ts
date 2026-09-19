@@ -94,4 +94,17 @@ describe("tracking helpers", () => {
     );
     expect(nextHistory["2026-09-16"].focusSeconds).toBe(300);
   });
+
+  it("returns the original history for an invalid delta", () => {
+    const currentHistory: TrackingHistory = {};
+
+    const nextHistory = updateTrackingHistory(
+      currentHistory,
+      "2026-09-16",
+      { completedRounds: 0, focusSeconds: -1, breakSeconds: 0 },
+      1_000,
+    );
+
+    expect(nextHistory).toBe(currentHistory);
+  });
 });
