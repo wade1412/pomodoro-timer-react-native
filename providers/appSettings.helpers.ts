@@ -13,8 +13,7 @@ import {
   MIN_SHORT_BREAK_SECONDS,
   SHORT_BREAK_STEP_SECONDS,
 } from "@/constants/settings.constants";
-import { AppSettings } from "./appSettings.types";
-import { DEFAULT_APP_SETTINGS } from "./appSettings.types";
+import { AppSettings, DEFAULT_APP_SETTINGS } from "./appSettings.types";
 
 export const migrateAppSettings = (value: unknown): AppSettings | null => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {

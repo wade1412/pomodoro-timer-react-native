@@ -1,6 +1,12 @@
-import { TimerPhase, TimerSession, TimerStatus } from "../constants/types";
+import {
+  TimerPhase,
+  TimerSession,
+  TimerStatus,
+  TrackingHistory,
+} from "../constants/types";
 
 export const ACTION_LABELS = {
+  hydrateTrackingHistory: "HYDRATE_TRACKING_HISTORY",
   startOrResumePhase: "START_OR_RESUME_PHASE",
   pausePhase: "PAUSE_PHASE",
   completeFocus: "FOCUS_COMPLETE",
@@ -14,6 +20,10 @@ export const ACTION_LABELS = {
 type ActionLabel = (typeof ACTION_LABELS)[keyof typeof ACTION_LABELS];
 
 export type ReducerAction =
+  | {
+      type: typeof ACTION_LABELS.hydrateTrackingHistory;
+      trackingHistory: TrackingHistory;
+    }
   | {
       type: typeof ACTION_LABELS.startOrResumePhase;
       nowSeconds: number;
@@ -185,4 +195,3 @@ export const validateReducerAction = (
 
   return false;
 };
-

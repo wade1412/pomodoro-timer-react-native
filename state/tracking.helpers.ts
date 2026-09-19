@@ -4,6 +4,11 @@ import {
   TrackingDelta,
   TrackingHistory,
 } from "@/constants/types";
+import {
+  validateDailyTracking,
+  validateDateKeyFormat,
+  validateTrackingDelta,
+} from "./tracking.validation";
 
 const getDateKey = (date: Date) => {
   const year = date.getFullYear();
@@ -39,16 +44,23 @@ export const updateTrackingHistory = (
   delta: TrackingDelta,
   nowSeconds: number,
 ): TrackingHistory => {
+  if (!validateDateKeyFormat(dateKey) || !validateTrackingDelta(delta)) {
+    return history;
+  }
+
   const currentDay = history[dateKey] ?? createEmptyDailyTracking(dateKey);
+  const nextDay = {
+    ...currentDay,
+    completedRounds: currentDay.completedRounds + delta.completedRounds,
+    focusSeconds: currentDay.focusSeconds + delta.focusSeconds,
+    breakSeconds: currentDay.breakSeconds + delta.breakSeconds,
+    updatedAtSeconds: nowSeconds,
+  };
+
+  if (!validateDailyTracking(nextDay, dateKey)) return history;
 
   return {
     ...history,
-    [dateKey]: {
-      ...currentDay,
-      completedRounds: currentDay.completedRounds + delta.completedRounds,
-      focusSeconds: currentDay.focusSeconds + delta.focusSeconds,
-      breakSeconds: currentDay.breakSeconds + delta.breakSeconds,
-      updatedAtSeconds: nowSeconds,
-    },
+    [dateKey]: nextDay,
   };
 };
