@@ -58,6 +58,17 @@ const createRunningState = ({
 });
 
 describe("pomodoro reducer", () => {
+  it("hydrates the complete persisted state", () => {
+    const persistedState = createRunningState({ focusSeconds: 300 });
+
+    expect(
+      reducer(POMODORO_INITIAL_STATE, {
+        type: ACTION_LABELS.hydratePomodoroState,
+        state: persistedState,
+      }),
+    ).toBe(persistedState);
+  });
+
   it("hydrates only tracking history without changing the timer session", () => {
     const runningState = createRunningState();
     const hydratedHistory = {
