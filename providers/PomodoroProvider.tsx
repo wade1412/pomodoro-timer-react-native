@@ -1,10 +1,17 @@
-import { POMODORO_TRACKING_STORAGE_KEY } from "@/constants/storage.constants";
+import {
+  POMODORO_STATE_STORAGE_KEY,
+  POMODORO_TRACKING_STORAGE_KEY,
+} from "@/constants/storage.constants";
 import { theme } from "@/constants/theme";
 import {
   POMODORO_INITIAL_STATE,
   PomodoroState,
 } from "@/constants/types";
 import { reducer } from "@/state/pomodoroReducer";
+import {
+  createPersistedPomodoroState,
+  parsePersistedPomodoroState,
+} from "@/state/pomodoro.persistence";
 import { ACTION_LABELS, ReducerAction } from "@/state/reducer.helpers";
 import { validateTrackingHistory } from "@/state/tracking.validation";
 import {
@@ -47,31 +54,45 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const loadPomodoroTracking = async () => {
+    const loadPomodoroState = async () => {
       try {
-        const storedTracking = await getStorageByKey(
-          POMODORO_TRACKING_STORAGE_KEY,
-        );
+        const [storedPomodoroState, legacyStoredTracking] = await Promise.all([
+          getStorageByKey(POMODORO_STATE_STORAGE_KEY),
+          getStorageByKey(POMODORO_TRACKING_STORAGE_KEY),
+        ]);
 
-        if (!validateTrackingHistory(storedTracking)) return;
+        const persistedState = parsePersistedPomodoroState(storedPomodoroState);
+
+        if (persistedState) {
+          dispatch({
+            type: ACTION_LABELS.hydratePomodoroState,
+            state: persistedState,
+          });
+          return;
+        }
+
+        if (!validateTrackingHistory(legacyStoredTracking)) return;
 
         dispatch({
           type: ACTION_LABELS.hydrateTrackingHistory,
-          trackingHistory: storedTracking,
+          trackingHistory: legacyStoredTracking,
         });
       } finally {
         setIsHydrated(true);
       }
     };
 
-    loadPomodoroTracking();
+    loadPomodoroState();
   }, []);
 
   useEffect(() => {
     if (!isHydrated) return;
 
-    storeData(POMODORO_TRACKING_STORAGE_KEY, state.trackingHistory);
-  }, [state.trackingHistory, isHydrated]);
+    storeData(
+      POMODORO_STATE_STORAGE_KEY,
+      createPersistedPomodoroState(state),
+    );
+  }, [state, isHydrated]);
 
   if (!isHydrated) return <View style={styles.container} />;
 
