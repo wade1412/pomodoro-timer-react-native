@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "pomodoro-timer-react-native",
+    "name": "Focus Timer",
     "slug": "pomodoro-timer",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/pomodoro-icon.png",
     "scheme": "pomodorotimerreactnative",
     "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.wade1412steam.pomodorotimer",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -33,11 +33,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/pomodoro-icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#0F0F12"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
