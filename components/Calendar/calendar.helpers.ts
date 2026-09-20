@@ -1,4 +1,4 @@
-import { TrackingHistory } from "@/constants/types";
+import { DateKey, TrackingHistory } from "@/constants/types";
 import { getDateKeyFromDay } from "@/state/tracking.helpers";
 import { DateInfo, MonthlyTracking } from "./calendar.types";
 
@@ -92,4 +92,31 @@ export const getMonthlyTracking = (
   }
 
   return monthlyTracking;
+};
+
+export const getLocalDateFromDateKey = (dateKey: DateKey) => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
+};
+
+export type GoalProgressLevel =
+  | "none"
+  | "under25"
+  | "from25To50"
+  | "from50To99"
+  | "reached";
+
+export const getGoalProgressLevel = (
+  trackedFocusSeconds: number,
+  dailyGoalSeconds: number,
+): GoalProgressLevel => {
+  if (trackedFocusSeconds <= 0) return "none";
+  if (trackedFocusSeconds >= dailyGoalSeconds) return "reached";
+
+  const progress = trackedFocusSeconds / dailyGoalSeconds;
+
+  if (progress <= 0.25) return "under25";
+  if (progress <= 0.5) return "from25To50";
+  return "from50To99";
 };
