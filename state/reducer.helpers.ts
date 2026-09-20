@@ -1,4 +1,5 @@
 import {
+  PomodoroState,
   TimerPhase,
   TimerSession,
   TimerStatus,
@@ -6,6 +7,7 @@ import {
 } from "../constants/types";
 
 export const ACTION_LABELS = {
+  hydratePomodoroState: "HYDRATE_POMODORO_STATE",
   hydrateTrackingHistory: "HYDRATE_TRACKING_HISTORY",
   startOrResumePhase: "START_OR_RESUME_PHASE",
   pausePhase: "PAUSE_PHASE",
@@ -20,6 +22,10 @@ export const ACTION_LABELS = {
 type ActionLabel = (typeof ACTION_LABELS)[keyof typeof ACTION_LABELS];
 
 export type ReducerAction =
+  | {
+      type: typeof ACTION_LABELS.hydratePomodoroState;
+      state: PomodoroState;
+    }
   | {
       type: typeof ACTION_LABELS.hydrateTrackingHistory;
       trackingHistory: TrackingHistory;

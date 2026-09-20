@@ -57,6 +57,10 @@ export function reducer(
   action: ReducerAction,
 ): PomodoroState {
   switch (action.type) {
+    case ACTION_LABELS.hydratePomodoroState: {
+      return action.state;
+    }
+
     case ACTION_LABELS.hydrateTrackingHistory: {
       return { ...state, trackingHistory: action.trackingHistory };
     }

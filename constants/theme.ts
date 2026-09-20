@@ -8,7 +8,7 @@ export const theme = {
     border: "#2A2A33",
     textPrimary: "#F4F2F1", // headers and timer text
     textSecondary: "#9291A3", // subtitles, dates
-    textMuted: "#646577",
+    textMuted: "#808193",
 
     //  Focus
     focus: "#F08058", // primary button,
