@@ -134,20 +134,6 @@ export default function SettingsScreen() {
               />
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>FEEDBACK</Text>
-              {[
-                ["Sound Alerts", "Play sound when timer ends"],
-                ["Vibration", "Haptic feedback"],
-                ["Auto-start breaks", "Automatically start break timer"],
-              ].map(([title, subtitle]) => (
-                <View key={title} style={styles.selectionContainer}>
-                  <SettingsTitle title={title} subtitle={subtitle} />
-                  <Text style={styles.settingValue}>On</Text>
-                </View>
-              ))}
-            </View>
-
             <View style={styles.hintContainer}>
               <Text style={styles.hintTitle}>ABOUT</Text>
               <Text style={styles.hint}>
@@ -187,7 +173,7 @@ const styles = StyleSheet.create({
   },
   contentColumn: {
     width: "100%",
-    maxWidth: 500,
+    maxWidth: 320,
     gap: spacing.xl,
   },
   section: {

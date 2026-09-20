@@ -3,19 +3,18 @@ import CircularTimer from "@/components/Timer/CircularTimer";
 import TimerControls from "@/components/Timer/TimerControls";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { theme } from "@/constants/theme";
+import { useNowSeconds } from "@/hooks/useNowSeconds";
 import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { usePomodoroContext } from "@/providers/PomodoroProvider";
 import { ACTION_LABELS } from "@/state/reducer.helpers";
 import { getLocalDateKey } from "@/state/tracking.helpers";
 import { getEffectiveElapsedSeconds } from "@/utils/timer";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
-import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useEffect } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { colors, spacing } = theme;
-const INITIAL_NOW_SECONDS = Math.floor(Date.now() / 1000);
-
 export default function FocusScreen() {
   const {
     dailyGoalSeconds,
@@ -24,7 +23,9 @@ export default function FocusScreen() {
     longBreakDurationSeconds,
   } = useAppSettings();
   const { state, dispatch } = usePomodoroContext();
-  const [nowSeconds, setNowSeconds] = useState(INITIAL_NOW_SECONDS);
+  const { nowSeconds, refreshNow } = useNowSeconds(
+    state.timerSession.status === "running" ? 250 : 30_000,
+  );
 
   const getConfiguredPhaseDuration = () => {
     if (state.timerSession.phase === "focus") return focusDurationSeconds;
@@ -32,18 +33,6 @@ export default function FocusScreen() {
       return longBreakDurationSeconds;
     return shortBreakDurationSeconds;
   };
-
-  useEffect(() => {
-    if (state.timerSession.status !== "running") return;
-
-    const secondInterval = setInterval(() => {
-      const newSeconds = Math.floor(Date.now() / 1000);
-
-      setNowSeconds(newSeconds);
-    }, 250);
-
-    return () => clearInterval(secondInterval);
-  }, [state.timerSession.status]);
 
   useEffect(() => {
     if (
@@ -74,7 +63,7 @@ export default function FocusScreen() {
     dispatch,
   ]);
 
-  const formattedDate = new Date().toLocaleDateString("en-US", {
+  const formattedDate = new Date(nowSeconds * 1000).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -82,8 +71,7 @@ export default function FocusScreen() {
 
   // ----- Timer Handlers -----
   const runTimerPhase = () => {
-    const dateNowSeconds = Math.floor(Date.now() / 1000);
-    setNowSeconds(dateNowSeconds);
+    const dateNowSeconds = refreshNow();
 
     dispatch({
       type: ACTION_LABELS.startOrResumePhase,
@@ -93,13 +81,13 @@ export default function FocusScreen() {
   };
 
   const pauseTimerPhase = () => {
-    const dateNowSeconds = Math.floor(Date.now() / 1000);
+    const dateNowSeconds = refreshNow();
 
     dispatch({ type: ACTION_LABELS.pausePhase, nowSeconds: dateNowSeconds });
   };
 
   const onTimerReset = () => {
-    const dateNowSeconds = Math.floor(Date.now() / 1000);
+    const dateNowSeconds = refreshNow();
 
     dispatch({
       type: ACTION_LABELS.resetTimer,
@@ -109,22 +97,19 @@ export default function FocusScreen() {
   };
 
   const onAddBreakTime = () => {
-    const dateNowSeconds = Math.floor(Date.now() / 1000);
-    setNowSeconds(dateNowSeconds);
+    const dateNowSeconds = refreshNow();
 
     dispatch({ type: ACTION_LABELS.extendBreak, nowSeconds: dateNowSeconds });
   };
 
   const onBreakEnd = () => {
-    const dateNowSeconds = Math.floor(Date.now() / 1000);
-    setNowSeconds(dateNowSeconds);
+    const dateNowSeconds = refreshNow();
 
     dispatch({ type: ACTION_LABELS.endBreak, nowSeconds: dateNowSeconds });
   };
 
   const onNewSessionRound = () => {
-    const dateNowSeconds = Math.floor(Date.now() / 1000);
-    setNowSeconds(dateNowSeconds);
+    const dateNowSeconds = refreshNow();
 
     dispatch({
       type: ACTION_LABELS.newSessionRound,
@@ -134,7 +119,7 @@ export default function FocusScreen() {
   };
 
   const onEndSession = () => {
-    const dateNowSeconds = Math.floor(Date.now() / 1000);
+    const dateNowSeconds = refreshNow();
     dispatch({
       type: ACTION_LABELS.endSession,
       nowSeconds: dateNowSeconds,
@@ -160,13 +145,15 @@ export default function FocusScreen() {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
-      <View
-        style={[
-          styles.mainContainer,
+      <ScrollView
+        style={styles.mainContainer}
+        contentContainerStyle={[
+          styles.scrollContent,
           {
             paddingBottom: tabBarHeight + spacing.sm,
           },
         ]}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentColumn}>
           {/* Header */}
@@ -204,7 +191,7 @@ export default function FocusScreen() {
             </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -216,6 +203,9 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: "center",
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,

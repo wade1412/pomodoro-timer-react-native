@@ -7,6 +7,7 @@ import Animated, {
   FadeInDown,
   FadeOut,
   FadeOutDown,
+  ReduceMotion,
 } from "react-native-reanimated";
 import AnimatedPressable from "../ui/AnimatedPressable";
 import EndPhaseButton from "./EndPhaseButton";
@@ -50,6 +51,7 @@ function CompletedRoundControls({
       >{`Round ${currentRoundNumber} complete. Ready for another?`}</Text>
       <AnimatedPressable
         accessibilityRole="button"
+        accessibilityLabel={`Start round ${currentRoundNumber + 1}`}
         onPress={onNewSessionRound}
         containerStyle={styles.fullWidthButton}
         style={({ pressed }) => [
@@ -88,6 +90,8 @@ function OptionalControls({
     <>
       <View style={styles.buttonsRow}>
         <AnimatedPressable
+          accessibilityLabel="Reset timer"
+          accessibilityRole="button"
           onPress={onReset}
           containerStyle={styles.secondaryButtonWrapper}
           style={({ pressed }) => [styles.resetButton]}
@@ -109,6 +113,9 @@ function OptionalControls({
         {/* Add Break Time Button */}
         {phase !== "focus" && (
           <AnimatedPressable
+            accessibilityLabel={`Add ${breakExtensionDuration / 60} minutes to break`}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: breakExtended }}
             disabled={breakExtended}
             style={({ pressed }) => [
               styles.addBreakButton,
@@ -169,8 +176,10 @@ export default function TimerControls({
       {status === "completed" && (
         <Animated.View
           style={styles.buttonContainer}
-          entering={FadeInDown.duration(300)}
-          exiting={FadeOutDown.duration(300)}
+          entering={FadeInDown.duration(300).reduceMotion(ReduceMotion.System)}
+          exiting={FadeOutDown.duration(300).reduceMotion(
+            ReduceMotion.System,
+          )}
         >
           <CompletedRoundControls
             currentRoundNumber={currentRoundNumber}
@@ -185,7 +194,7 @@ export default function TimerControls({
         <View style={styles.buttonContainer}>
           <AnimatedPressable
             accessibilityRole="button"
-            accessibilityLabel="Start or pause the timer"
+            accessibilityLabel={buttonText}
             containerStyle={styles.fullWidthButton}
             style={({ pressed }) => [
               styles.timerButton,
@@ -205,8 +214,10 @@ export default function TimerControls({
             <Animated.Text
               style={styles.timerButtonText}
               key={buttonText}
-              entering={FadeIn.duration(100)}
-              exiting={FadeOut.duration(100)}
+              entering={FadeIn.duration(100).reduceMotion(ReduceMotion.System)}
+              exiting={FadeOut.duration(100).reduceMotion(
+                ReduceMotion.System,
+              )}
             >
               {buttonText}
             </Animated.Text>
@@ -216,8 +227,12 @@ export default function TimerControls({
           {status !== "ready" && (
             <Animated.View
               style={styles.optionalButtonsContainer}
-              entering={FadeInDown.duration(300)}
-              exiting={FadeOutDown.duration(300)}
+              entering={FadeInDown.duration(300).reduceMotion(
+                ReduceMotion.System,
+              )}
+              exiting={FadeOutDown.duration(300).reduceMotion(
+                ReduceMotion.System,
+              )}
             >
               <OptionalControls
                 phase={phase}

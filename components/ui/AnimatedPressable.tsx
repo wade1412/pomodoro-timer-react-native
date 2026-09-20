@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import Animated, {
   cancelAnimation,
+  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -45,13 +46,18 @@ export default function AnimatedPressable({
       damping: 15,
       stiffness: 300,
       mass: 0.5,
+      reduceMotion: ReduceMotion.System,
     });
     onPressIn?.(event);
   };
 
   const handlePressOut = (event: GestureResponderEvent) => {
     if (disabled) return;
-    pressProgress.value = withSpring(0, { damping: 12, stiffness: 300 });
+    pressProgress.value = withSpring(0, {
+      damping: 12,
+      stiffness: 300,
+      reduceMotion: ReduceMotion.System,
+    });
     onPressOut?.(event);
   };
 
@@ -59,7 +65,10 @@ export default function AnimatedPressable({
     if (!disabled) return;
 
     cancelAnimation(pressProgress);
-    pressProgress.value = withTiming(0, { duration: 100 });
+    pressProgress.value = withTiming(0, {
+      duration: 100,
+      reduceMotion: ReduceMotion.System,
+    });
   }, [disabled, pressProgress]);
 
   return (

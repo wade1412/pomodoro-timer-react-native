@@ -4,6 +4,7 @@ import { createEmptyDailyTracking } from "@/state/tracking.helpers";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -55,6 +56,7 @@ export default function DailyGoalCard({
   useEffect(() => {
     animatedProgress.value = withTiming(progress, {
       duration: 300,
+      reduceMotion: ReduceMotion.System,
     });
   }, [animatedProgress, progress]);
 
@@ -71,7 +73,6 @@ export default function DailyGoalCard({
           style={styles.goalMinutes}
         >{`${displayFocusMinutes}/${Math.floor(dailyGoalSeconds / 60)} min`}</Text>
       </View>
-
       <View style={styles.progressBar}>
         <Animated.View
           style={[styles.progressBarFill, animatedWidth]}
@@ -101,9 +102,8 @@ const styles = StyleSheet.create({
   },
   goalCardTitle: {
     ...typography.body,
-    fontWeight: "400",
+    fontWeight: "500",
     color: colors.textMuted,
-    letterSpacing: 0.8,
   },
   goalMinutes: {
     ...typography.body,

@@ -70,6 +70,7 @@ export default function CircularTimer({
   useEffect(() => {
     animatedProgress.value = withTiming(progress, {
       duration: 300,
+      reduceMotion: ReduceMotion.System,
     });
   }, [animatedProgress, progress]);
   const animatedProps = useAnimatedProps(() => {
@@ -87,6 +88,7 @@ export default function CircularTimer({
         withTiming(1, {
           duration: pulseAnimationDuration,
           easing: Easing.inOut(Easing.ease),
+          reduceMotion: ReduceMotion.System,
         }),
         -1,
         true,
@@ -95,6 +97,7 @@ export default function CircularTimer({
       cancelAnimation(pulseAnimationProgress);
       pulseAnimationProgress.value = withTiming(0, {
         duration: pulseAnimationStopDuration,
+        reduceMotion: ReduceMotion.System,
       });
     }
 
