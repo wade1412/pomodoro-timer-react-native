@@ -1,3 +1,4 @@
+import { theme } from "@/constants/theme";
 import { DateKey, TrackingHistory } from "@/constants/types";
 import { getDateKeyFromDay } from "@/state/tracking.helpers";
 import { DateInfo, MonthlyTracking } from "./calendar.types";
@@ -6,6 +7,8 @@ export const weekdaysUINames = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 
 const ROWS_NUMBER = 6;
 const COLUMNS_NUMBER = 7;
+
+const { colors } = theme;
 
 const generateArrayGrid = () => {
   const grid: Record<string, string[]> = {};
@@ -38,14 +41,25 @@ export const createMonthGrid = (year: number, month: number) => {
   for (let day = 1; day <= daysInMonth; day++) {
     const dayOfWeekNumber = new Date(year, month, day).getDay();
     const currentRowKey = gridKeys[currentRow];
+    const isLastRow = currentRowKey === gridKeys.at(-1);
 
     calendarGrid[currentRowKey][dayOfWeekNumber] = String(day);
+
+    // If the days is the last one in month and there is another row of
+    // empty values left - delete it to keep the layout compact
+    if (day === daysInMonth && !isLastRow) {
+      const entries = Object.entries(calendarGrid);
+      entries.pop();
+      const trimmedGrid = Object.fromEntries(entries);
+      return trimmedGrid;
+    }
 
     if (dayOfWeekNumber === 6 && currentRow < ROWS_NUMBER - 1) {
       currentRow++;
     }
   }
 
+  console.log(calendarGrid);
   return calendarGrid;
 };
 
@@ -107,7 +121,7 @@ export type GoalProgressLevel =
   | "from50To99"
   | "reached";
 
-export const getGoalProgressLevel = (
+const getGoalProgressLevel = (
   trackedFocusSeconds: number,
   dailyGoalSeconds: number,
 ): GoalProgressLevel => {
@@ -119,4 +133,35 @@ export const getGoalProgressLevel = (
   if (progress <= 0.25) return "under25";
   if (progress <= 0.5) return "from25To50";
   return "from50To99";
+};
+
+export const getCalendarCellBackgroundColor = (
+  day: string,
+  dateInfo: DateInfo,
+  trackingHistory: TrackingHistory,
+  dailyGoalSeconds: number,
+) => {
+  if (!day.trim()) return "transparent";
+
+  const dateKey = getDateKeyFromDay(dateInfo.year, dateInfo.month, Number(day));
+
+  if (!trackingHistory[dateKey]) return colors.surface;
+  const trackedFocusSeconds = trackingHistory[dateKey].focusSeconds;
+  const progressLevel = getGoalProgressLevel(
+    trackedFocusSeconds,
+    dailyGoalSeconds,
+  );
+
+  switch (progressLevel) {
+    case "none":
+      return colors.surface;
+    case "reached":
+      return colors.goalProgressColors.reached;
+    case "under25":
+      return colors.goalProgressColors.under25;
+    case "from25To50":
+      return colors.goalProgressColors.from25To50;
+    case "from50To99":
+      return colors.goalProgressColors.from50To99;
+  }
 };
