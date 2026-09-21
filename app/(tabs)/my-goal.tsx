@@ -6,7 +6,7 @@ import {
   MIN_DAILY_GOAL_MINUTES,
   QUICK_GOAL_PRESETS_SECONDS,
 } from "@/constants/goal.constants";
-import { theme } from "@/constants/theme";
+import { layout, theme } from "@/constants/theme";
 import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { useState } from "react";
@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { colors, typography, spacing, radius } = theme;
+const { screen, contentColumn } = layout;
 
 export default function MyGoalScreen() {
   const [number, setNumber] = useState("");
@@ -54,7 +55,7 @@ export default function MyGoalScreen() {
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
+    <SafeAreaView edges={["top", "left", "right"]} style={screen}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -68,7 +69,7 @@ export default function MyGoalScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.contentColumn}>
+          <View style={contentColumn}>
             <ScreenHeader
               title="My Goal"
               subtitle="Set your daily focus target"
@@ -172,10 +173,6 @@ export default function MyGoalScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -183,18 +180,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-  },
-
-  contentColumn: {
-    width: "100%",
-    maxWidth: 320,
-    gap: spacing.lg,
   },
   verticalContainer: {
     flexDirection: "column",
-    gap: spacing.md,
-    width: "100%",
+    gap: spacing.sm,
   },
   sectionCaption: {
     ...typography.caption,
@@ -205,8 +194,8 @@ const styles = StyleSheet.create({
   quickPresetsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "space-evenly",
     gap: spacing.sm,
   },
   presetCard: {
@@ -239,6 +228,7 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: spacing.md,
     flexDirection: "row",
+    maxHeight: 50,
   },
   minutesInput: {
     flex: 1,
@@ -251,7 +241,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     color: colors.textPrimary,
   },
-
   setMinutesButton: {
     height: "100%",
     paddingHorizontal: spacing.xl,
@@ -273,7 +262,6 @@ const styles = StyleSheet.create({
   setMinutesButtonTextDisabled: {
     color: colors.textMuted,
   },
-
   hintContainer: {
     marginTop: spacing.md,
     paddingVertical: spacing.lg,

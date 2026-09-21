@@ -6,7 +6,7 @@ import {
   LONG_BREAK_MINUTES_OPTIONS,
   SHORT_BREAK_MINUTES_OPTIONS,
 } from "@/constants/settings.constants";
-import { theme } from "@/constants/theme";
+import { layout, theme } from "@/constants/theme";
 import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
 import { useState } from "react";
@@ -14,6 +14,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { colors, typography, spacing, radius } = theme;
+const { screen, contentColumn } = layout;
 
 type DurationSetting = "focus" | "shortBreak" | "longBreak";
 
@@ -61,8 +62,9 @@ export default function SettingsScreen() {
     updateShortBreakDurationSeconds,
     updateLongBreakDurationSeconds,
   } = useAppSettings();
-  const [activePicker, setActivePicker] =
-    useState<DurationSetting | null>(null);
+  const [activePicker, setActivePicker] = useState<DurationSetting | null>(
+    null,
+  );
   const [draftMinutes, setDraftMinutes] = useState(0);
   const tabBarHeight = useBottomTabBarHeight();
 
@@ -92,7 +94,7 @@ export default function SettingsScreen() {
 
   return (
     <>
-      <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
+      <SafeAreaView edges={["top", "left", "right"]} style={screen}>
         <ScrollView
           contentContainerStyle={[
             styles.mainContainer,
@@ -100,14 +102,13 @@ export default function SettingsScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.contentColumn}>
+          <View style={contentColumn}>
             <ScreenHeader
               title="Settings"
               subtitle="Customize your experience"
             />
 
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>TIMER</Text>
               <DurationRow
                 durationSeconds={focusDurationSeconds}
                 onPress={() =>
@@ -161,29 +162,13 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   mainContainer: {
     flexGrow: 1,
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-  },
-  contentColumn: {
-    width: "100%",
-    maxWidth: 320,
-    gap: spacing.xl,
   },
   section: {
-    gap: spacing.sm,
-  },
-  sectionLabel: {
-    ...typography.sectionTitle,
-    paddingHorizontal: spacing.sm,
-    color: colors.textMuted,
-    letterSpacing: 1,
+    gap: spacing.md,
   },
   selectionContainer: {
     width: "100%",
@@ -192,7 +177,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     borderRadius: radius.lg,
@@ -209,6 +193,7 @@ const styles = StyleSheet.create({
   hintContainer: {
     gap: spacing.sm,
     padding: spacing.lg,
+    marginTop: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     borderRadius: radius.lg,
@@ -217,7 +202,6 @@ const styles = StyleSheet.create({
   hintTitle: {
     ...typography.sectionTitle,
     color: colors.textSecondary,
-    letterSpacing: 1,
   },
   hint: {
     ...typography.caption,

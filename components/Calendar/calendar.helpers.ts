@@ -41,17 +41,16 @@ export const createMonthGrid = (year: number, month: number) => {
   for (let day = 1; day <= daysInMonth; day++) {
     const dayOfWeekNumber = new Date(year, month, day).getDay();
     const currentRowKey = gridKeys[currentRow];
-    const isLastRow = currentRowKey === gridKeys.at(-1);
 
     calendarGrid[currentRowKey][dayOfWeekNumber] = String(day);
 
     // If the days is the last one in month and there is another row of
     // empty values left - delete it to keep the layout compact
-    if (day === daysInMonth && !isLastRow) {
+    if (day === daysInMonth) {
       const entries = Object.entries(calendarGrid);
-      entries.pop();
-      const trimmedGrid = Object.fromEntries(entries);
-      return trimmedGrid;
+      const trimmedEntries = entries.slice(0, currentRow + 1);
+
+      return Object.fromEntries(trimmedEntries);
     }
 
     if (dayOfWeekNumber === 6 && currentRow < ROWS_NUMBER - 1) {
@@ -59,7 +58,6 @@ export const createMonthGrid = (year: number, month: number) => {
     }
   }
 
-  console.log(calendarGrid);
   return calendarGrid;
 };
 
@@ -121,7 +119,7 @@ export type GoalProgressLevel =
   | "from50To99"
   | "reached";
 
-const getGoalProgressLevel = (
+export const getGoalProgressLevel = (
   trackedFocusSeconds: number,
   dailyGoalSeconds: number,
 ): GoalProgressLevel => {

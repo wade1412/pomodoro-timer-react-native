@@ -100,3 +100,14 @@ export const theme = {
     },
   },
 } as const;
+
+export const layout = {
+  screen: { flex: 1, backgroundColor: theme.colors.background },
+  contentColumn: {
+    flex: 1,
+    minHeight: 0,
+    width: "100%",
+    gap: theme.spacing.lg,
+    maxWidth: 650,
+  },
+} as const;

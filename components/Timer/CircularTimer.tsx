@@ -1,9 +1,10 @@
 import { theme } from "@/constants/theme";
 import { TimerSession } from "@/constants/types";
 import { useEffect } from "react";
-import { Easing, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   cancelAnimation,
+  Easing,
   FadeIn,
   FadeOut,
   ReduceMotion,
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   timerArea: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   timerRing: {
     alignItems: "center",

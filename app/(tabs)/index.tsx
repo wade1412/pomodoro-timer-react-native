@@ -2,7 +2,7 @@ import DailyGoalCard from "@/components/GoalProgressBar/DailyGoalCard";
 import CircularTimer from "@/components/Timer/CircularTimer";
 import TimerControls from "@/components/Timer/TimerControls";
 import ScreenHeader from "@/components/ui/ScreenHeader";
-import { theme } from "@/constants/theme";
+import { layout, theme } from "@/constants/theme";
 import { useNowSeconds } from "@/hooks/useNowSeconds";
 import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { usePomodoroContext } from "@/providers/PomodoroProvider";
@@ -14,7 +14,10 @@ import { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { colors, spacing } = theme;
+const { spacing } = theme;
+const { contentColumn, screen } = layout;
+const buttonsMaxWidth = 424;
+
 export default function FocusScreen() {
   const {
     dailyGoalSeconds,
@@ -63,11 +66,14 @@ export default function FocusScreen() {
     dispatch,
   ]);
 
-  const formattedDate = new Date(nowSeconds * 1000).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  const formattedDate = new Date(nowSeconds * 1000).toLocaleDateString(
+    "en-US",
+    {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    },
+  );
 
   // ----- Timer Handlers -----
   const runTimerPhase = () => {
@@ -144,7 +150,7 @@ export default function FocusScreen() {
   const tabBarHeight = useBottomTabBarHeight();
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
+    <SafeAreaView edges={["top", "left", "right"]} style={screen}>
       <ScrollView
         style={styles.mainContainer}
         contentContainerStyle={[
@@ -155,17 +161,19 @@ export default function FocusScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.contentColumn}>
+        <View style={contentColumn}>
           {/* Header */}
-          <ScreenHeader title="Focus" subtitle={formattedDate} />
+          <View style={styles.headerSection}>
+            <ScreenHeader title="Focus" subtitle={formattedDate} />
 
-          {/* Tracking Area */}
-          <DailyGoalCard
-            state={state}
-            elapsedSeconds={effectiveElapsedSeconds}
-            dailyGoalSeconds={dailyGoalSeconds}
-            dateKey={getLocalDateKey(nowSeconds)}
-          />
+            {/* Tracking Area */}
+            <DailyGoalCard
+              state={state}
+              elapsedSeconds={effectiveElapsedSeconds}
+              dailyGoalSeconds={dailyGoalSeconds}
+              dateKey={getLocalDateKey(nowSeconds)}
+            />
+          </View>
 
           {/* Timer Area */}
           <View style={styles.timerAndActionsContainer}>
@@ -197,10 +205,6 @@ export default function FocusScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   mainContainer: {
     flex: 1,
   },
@@ -208,14 +212,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
   },
-  contentColumn: {
-    flex: 1,
-    minHeight: 0,
-    width: "100%",
-    maxWidth: 320,
-    gap: spacing.md,
+  headerSection: {
+    gap: spacing.xs,
   },
   timerAndActionsContainer: {
     flex: 1,
@@ -223,6 +222,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
   timerSlot: {
     flex: 1,
@@ -234,5 +234,6 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 180,
     justifyContent: "flex-start",
+    maxWidth: buttonsMaxWidth,
   },
 });

@@ -91,9 +91,9 @@ export default function DailyGoalCard({
 const styles = StyleSheet.create({
   goalCardContainer: {
     backgroundColor: colors.surface,
-    marginHorizontal: spacing.xs,
     borderRadius: radius.lg,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
     gap: spacing.md,
   },
   goalCardHeaderContainer: {

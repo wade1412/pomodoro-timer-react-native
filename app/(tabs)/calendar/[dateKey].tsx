@@ -4,7 +4,7 @@ import DaySummaryGoal from "@/components/Calendar/DaySummaryGoal";
 import DayTrackingMetricsSummary from "@/components/Calendar/DayTrackingMetricsSummary";
 import AnimatedPressable from "@/components/ui/AnimatedPressable";
 import ScreenHeader from "@/components/ui/ScreenHeader";
-import { theme } from "@/constants/theme";
+import { layout, theme } from "@/constants/theme";
 import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { usePomodoroContext } from "@/providers/PomodoroProvider";
 import { createEmptyDailyTracking } from "@/state/tracking.helpers";
@@ -16,6 +16,7 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { colors, spacing } = theme;
+const { screen, contentColumn } = layout;
 
 export default function DayTracking() {
   const { state } = usePomodoroContext();
@@ -38,14 +39,14 @@ export default function DayTracking() {
   );
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
+    <SafeAreaView edges={["top", "left", "right"]} style={screen}>
       <ScrollView
         contentContainerStyle={[
           styles.mainContainer,
           { paddingBottom: tabBarHeight + spacing.md },
         ]}
       >
-        <View style={styles.contentColumn}>
+        <View style={contentColumn}>
           <View style={styles.screenHeader}>
             <AnimatedPressable
               accessibilityLabel="Back to calendar"
@@ -87,32 +88,23 @@ export default function DayTracking() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   mainContainer: {
     flexGrow: 1,
     alignItems: "center",
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
   },
-  contentColumn: {
-    width: "100%",
-    maxWidth: 320,
-    gap: spacing.lg,
-  },
   screenHeader: {
     width: "100%",
     flexDirection: "row",
-    alignItems: "flex-start",
+    gap: spacing.md,
   },
   backButtonContainer: {
-    marginTop: spacing["3xl"],
+    marginTop: spacing["2xl"], // Screen header has padding 2xl so to center the button there has to be a margin
   },
   backButton: {
-    width: 44,
-    height: 44,
+    width: 50,
+    height: 50,
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,

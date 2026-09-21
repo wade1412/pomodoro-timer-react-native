@@ -20,8 +20,7 @@ export default function ScreenHeader({
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: spacing.sm,
-    paddingTop: spacing["3xl"],
+    paddingTop: spacing["2xl"],
     paddingBottom: spacing.sm,
     gap: spacing.xs,
   },
