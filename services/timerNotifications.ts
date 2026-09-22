@@ -4,11 +4,11 @@ import * as Notifications from "expo-notifications";
 
 const TIMER_COMPLETION_NOTIFICATION_ID = "activeTimerCompletion";
 
-const IDENTIFIERS = {
+export const IDENTIFIERS = {
   focusComplete: "focusComplete",
   breakComplete: "breakComplete",
   startBreak: "startBreak",
-  startFocus: "startFocus",
+  startNewRound: "startNewRound",
   endSession: "endSession",
   timerPhaseCompleted: "timerPhaseCompleted",
 };
@@ -44,9 +44,9 @@ export const registerTimerNotificationCategories = async (): Promise<void> => {
     },
   ]);
 
-  await Notifications.setNotificationCategoryAsync("breakComplete", [
+  await Notifications.setNotificationCategoryAsync(IDENTIFIERS.breakComplete, [
     {
-      identifier: IDENTIFIERS.startFocus,
+      identifier: IDENTIFIERS.startNewRound,
       buttonTitle: "Start new focus round",
       options: { opensAppToForeground: true },
     },
