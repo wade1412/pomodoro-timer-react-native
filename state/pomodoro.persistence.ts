@@ -4,6 +4,10 @@ import {
   TimerSession,
   TimerStatus,
 } from "@/constants/types";
+import {
+  isNonNegativeSafeInteger,
+  isNullableTimestamp,
+} from "@/utils/validation.general";
 import { validateTimerStatus } from "./reducer.helpers";
 import { validateTrackingHistory } from "./tracking.validation";
 
@@ -24,12 +28,6 @@ type PersistedPomodoroState = {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
-
-const isNonNegativeSafeInteger = (value: unknown): value is number =>
-  typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
-
-const isNullableTimestamp = (value: unknown): value is number | null =>
-  value === null || isNonNegativeSafeInteger(value);
 
 export const validatePersistedTimerSession = (
   value: unknown,
@@ -54,7 +52,8 @@ export const validatePersistedTimerSession = (
   const timerSession = value as TimerSession;
 
   if (!validateTimerStatus(timerSession)) return false;
-  if (timerSession.phase === "focus" && timerSession.breakExtended) return false;
+  if (timerSession.phase === "focus" && timerSession.breakExtended)
+    return false;
 
   if (!timerSession.sessionActive) {
     return (
