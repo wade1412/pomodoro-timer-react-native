@@ -1,8 +1,10 @@
 import { TimerPhase } from "@/constants/types";
 import { isNonNegativeSafeInteger } from "@/utils/validation.general";
 import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
 
 const TIMER_COMPLETION_NOTIFICATION_ID = "activeTimerCompletion";
+const MIN_SCHEDULING_LEAD_TIME_MS = 1_000;
 
 export const IDENTIFIERS = {
   focusComplete: "focusComplete",
@@ -14,6 +16,10 @@ export const IDENTIFIERS = {
 };
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
+  if (Platform.OS === "web") {
+    return false;
+  }
+
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
 
   let finalStatus = existingStatus;
@@ -31,6 +37,10 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 };
 
 export const registerTimerNotificationCategories = async (): Promise<void> => {
+  if (Platform.OS === "web") {
+    return;
+  }
+
   await Notifications.setNotificationCategoryAsync(IDENTIFIERS.focusComplete, [
     {
       identifier: IDENTIFIERS.startBreak,
@@ -59,18 +69,22 @@ export const registerTimerNotificationCategories = async (): Promise<void> => {
 };
 
 export const scheduleTimerCompletionNotification = async (
-  nowSeconds: number,
   endsAtSeconds: number,
   timerPhase: TimerPhase,
-): Promise<void> => {
-  if (
-    !isNonNegativeSafeInteger(endsAtSeconds) ||
-    !isNonNegativeSafeInteger(nowSeconds) ||
-    endsAtSeconds <= nowSeconds
-  )
-    return;
+): Promise<boolean> => {
+  if (Platform.OS === "web") {
+    return false;
+  }
 
-  const endingDate = new Date(endsAtSeconds * 1000);
+  if (!isNonNegativeSafeInteger(endsAtSeconds)) return false;
+
+  const endingTimeMs = endsAtSeconds * 1_000;
+
+  // iOS rejects date triggers that become current or past before the native
+  // scheduling request is processed
+  if (endingTimeMs <= Date.now() + MIN_SCHEDULING_LEAD_TIME_MS) return false;
+
+  const endingDate = new Date(endingTimeMs);
 
   const categoryIdentifier =
     timerPhase === "focus"
@@ -99,9 +113,15 @@ export const scheduleTimerCompletionNotification = async (
       date: endingDate,
     },
   });
+
+  return true;
 };
 
 export const cancelTimerCompletionNotification = async (): Promise<void> => {
+  if (Platform.OS === "web") {
+    return;
+  }
+
   await Notifications.cancelScheduledNotificationAsync(
     TIMER_COMPLETION_NOTIFICATION_ID,
   );

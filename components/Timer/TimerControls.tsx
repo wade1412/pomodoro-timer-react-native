@@ -177,9 +177,7 @@ export default function TimerControls({
         <Animated.View
           style={styles.buttonContainer}
           entering={FadeInDown.duration(300).reduceMotion(ReduceMotion.System)}
-          exiting={FadeOutDown.duration(300).reduceMotion(
-            ReduceMotion.System,
-          )}
+          exiting={FadeOutDown.duration(300).reduceMotion(ReduceMotion.System)}
         >
           <CompletedRoundControls
             currentRoundNumber={currentRoundNumber}
@@ -215,9 +213,7 @@ export default function TimerControls({
               style={styles.timerButtonText}
               key={buttonText}
               entering={FadeIn.duration(100).reduceMotion(ReduceMotion.System)}
-              exiting={FadeOut.duration(100).reduceMotion(
-                ReduceMotion.System,
-              )}
+              exiting={FadeOut.duration(100).reduceMotion(ReduceMotion.System)}
             >
               {buttonText}
             </Animated.Text>
