@@ -6,6 +6,7 @@ import { layout, theme } from "@/constants/theme";
 import { useNowSeconds } from "@/hooks/useNowSeconds";
 import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { usePomodoroContext } from "@/providers/PomodoroProvider";
+import { requestNotificationPermission } from "@/services/timerNotifications";
 import { ACTION_LABELS } from "@/state/reducer.helpers";
 import { getLocalDateKey } from "@/state/tracking.helpers";
 import { getEffectiveElapsedSeconds } from "@/utils/timer";
@@ -76,7 +77,17 @@ export default function FocusScreen() {
   );
 
   // ----- Timer Handlers -----
-  const runTimerPhase = () => {
+  const runTimerPhase = async () => {
+    // Request permission for notifications
+    if (state.timerSession.status === "ready") {
+      try {
+        await requestNotificationPermission();
+      } catch (error) {
+        console.error("Notification permission request failed: ", error);
+      }
+    }
+
+    // Get a fresh timestamp after the permission dialog closes
     const dateNowSeconds = refreshNow();
 
     dispatch({

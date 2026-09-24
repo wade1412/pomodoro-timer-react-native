@@ -1,19 +1,31 @@
-export const DEFAULT_FOCUS_DURATION_SECONDS = 25 * 60;
+export const SETTINGS_DURATIONS = {
+  defaultDurations: {
+    focusPhaseSeconds: 25 * 60, // 25 minutes
+    shortBreakPhaseSeconds: 5 * 60, // 5 minutes
+    longBreakPhaseSeconds: 15 * 60, // 15 minutes
+    breakExtensionSeconds: 5 * 60, // 5 minutes
+  },
 
-export const MIN_FOCUS_SECONDS = 10 * 60;
-export const MAX_FOCUS_SECONDS = 40 * 60;
-export const FOCUS_STEP_SECONDS = 5 * 60;
+  focusPhase: {
+    minSeconds: 10 * 60, // 10 minutes
+    stepSeconds: 5 * 60,
+    maxSeconds: 60 * 60, // 60 minutes
+  },
 
-export const DEFAULT_SHORT_BREAK_DURATION_SECONDS = 5 * 60;
-export const DEFAULT_LONG_BREAK_DURATION_SECONDS = 15 * 60;
+  shortBreakPhase: {
+    minSeconds: 60,
+    stepSeconds: 2 * 60,
+    maximumValue: 15 * 60, // 15 minutes
+  },
 
-export const MIN_SHORT_BREAK_SECONDS = 1 * 60;
-export const MAX_SHORT_BREAK_SECONDS = 15 * 60;
-export const SHORT_BREAK_STEP_SECONDS = 2 * 60;
+  longBreakPhase: {
+    minSeconds: 5 * 60, // 5 minutes
+    stepSeconds: 5 * 60,
+    maxSeconds: 1800, // 30 minutes
+  },
+};
 
-export const MIN_LONG_BREAK_SECONDS = 5 * 60;
-export const MAX_LONG_BREAK_SECONDS = 30 * 60;
-export const LONG_BREAK_STEP_SECONDS = 5 * 60;
+const { focusPhase, shortBreakPhase, longBreakPhase } = SETTINGS_DURATIONS;
 
 const createMinuteOptions = (
   minimum: number,
@@ -30,17 +42,17 @@ const createMinuteOptions = (
 };
 
 export const FOCUS_MINUTES_OPTIONS = createMinuteOptions(
-  MIN_FOCUS_SECONDS,
-  MAX_FOCUS_SECONDS,
-  FOCUS_STEP_SECONDS,
+  focusPhase.minSeconds,
+  focusPhase.maxSeconds,
+  focusPhase.stepSeconds,
 );
 export const SHORT_BREAK_MINUTES_OPTIONS = createMinuteOptions(
-  MIN_SHORT_BREAK_SECONDS,
-  MAX_SHORT_BREAK_SECONDS,
-  SHORT_BREAK_STEP_SECONDS,
+  shortBreakPhase.minSeconds,
+  shortBreakPhase.maximumValue,
+  shortBreakPhase.stepSeconds,
 );
 export const LONG_BREAK_MINUTES_OPTIONS = createMinuteOptions(
-  MIN_LONG_BREAK_SECONDS,
-  MAX_LONG_BREAK_SECONDS,
-  LONG_BREAK_STEP_SECONDS,
+  longBreakPhase.minSeconds,
+  longBreakPhase.maxSeconds,
+  longBreakPhase.stepSeconds,
 );

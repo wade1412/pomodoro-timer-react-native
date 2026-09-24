@@ -33,7 +33,7 @@ export const useNotificationObserver = ({
 
     const initializeNotifications = async () => {
       try {
-        // Register Categories
+        // Register Notfication Categories
         await registerTimerNotificationCategories();
 
         // Get initial response

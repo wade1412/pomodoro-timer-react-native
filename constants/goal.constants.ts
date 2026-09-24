@@ -1,6 +1,8 @@
-export const QUICK_GOAL_PRESETS_SECONDS = [3000, 4500, 6000, 7500, 9000, 12000];
-export const DEFAULT_DAILY_GOAL_SECONDS = 100 * 60;
-export const MIN_DAILY_GOAL_SECONDS = 60;
-export const MAX_DAILY_GOAL_SECONDS = 1440 * 60;
-export const MIN_DAILY_GOAL_MINUTES = MIN_DAILY_GOAL_SECONDS / 60;
-export const MAX_DAILY_GOAL_MINUTES = MAX_DAILY_GOAL_SECONDS / 60;
+export const GOAL_DURATIONS = {
+  goalPresetsSeconds: [3000, 4500, 6000, 7500, 9000, 12000],
+
+  defailtGoalSeconds: 100 * 60, // 100 minutes
+
+  minSeconds: 10 * 60,
+  maxSeconds: 8 * 60 * 60, // 8 hours
+};

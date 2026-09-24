@@ -1,9 +1,4 @@
-import {
-  breakExtensionDuration,
-  focusPhaseDuration,
-  longBreakPhaseDuration,
-  shortBreakPhaseDuration,
-} from "@/constants/timer.constants";
+import { SETTINGS_DURATIONS } from "@/constants/settings.constants";
 import {
   POMODORO_INITIAL_STATE,
   PomodoroState,
@@ -21,7 +16,7 @@ const dateKey = getLocalDateKey(nowSeconds);
 
 const createRunningState = ({
   phase = "focus",
-  durationSeconds = focusPhaseDuration,
+  durationSeconds = SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
   accumulatedActiveSeconds = 0,
   focusSeconds = 0,
   breakSeconds = 0,
@@ -136,11 +131,12 @@ describe("pomodoro reducer", () => {
     const nextState = reducer(pausedState, {
       type: ACTION_LABELS.startOrResumePhase,
       nowSeconds,
-      phaseDurationSeconds: focusPhaseDuration,
+      phaseDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
     });
 
     expect(nextState.timerSession.endsAtSeconds).toBe(
-      nowSeconds + focusPhaseDuration - 300,
+      nowSeconds + SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds - 300,
     );
     expect(nextState.trackingHistory).toBe(pausedState.trackingHistory);
   });
@@ -150,7 +146,8 @@ describe("pomodoro reducer", () => {
     const nextState = reducer(state, {
       type: ACTION_LABELS.resetTimer,
       nowSeconds,
-      phaseDurationSeconds: focusPhaseDuration,
+      phaseDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
     });
 
     expect(nextState.trackingHistory[dateKey].focusSeconds).toBe(passedSeconds);
@@ -183,56 +180,65 @@ describe("pomodoro reducer", () => {
     const nextState = reducer(pausedState, {
       type: ACTION_LABELS.resetTimer,
       nowSeconds,
-      phaseDurationSeconds: focusPhaseDuration,
+      phaseDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
     });
 
     expect(nextState.trackingHistory[dateKey].focusSeconds).toBe(300);
   });
 
   it("completes focus, tracks its final segment and starts a short break", () => {
-    const completionSeconds = startedAtSeconds + focusPhaseDuration;
+    const completionSeconds =
+      startedAtSeconds + SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds;
     const completionDateKey = getLocalDateKey(completionSeconds);
     const state = createRunningState();
     const nextState = reducer(state, {
       type: ACTION_LABELS.completeFocus,
       nowSeconds: completionSeconds,
-      shortBreakDurationSeconds: shortBreakPhaseDuration,
-      longBreakDurationSeconds: longBreakPhaseDuration,
+      shortBreakDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
+      longBreakDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.longBreakPhaseSeconds,
     });
 
     expect(nextState.trackingHistory[completionDateKey]).toMatchObject({
-      focusSeconds: focusPhaseDuration,
+      focusSeconds: SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
       completedRounds: 1,
     });
     expect(nextState.timerSession).toMatchObject({
       currentRoundNumber: 1,
       phase: "shortBreak",
       status: "ready",
-      timerDurationSeconds: shortBreakPhaseDuration,
+      timerDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
     });
   });
 
   it("creates a long break after every fourth completed focus", () => {
     const state = createRunningState();
     state.timerSession.currentRoundNumber = 3;
-    const completionSeconds = startedAtSeconds + focusPhaseDuration;
+    const completionSeconds =
+      startedAtSeconds + SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds;
     const nextState = reducer(state, {
       type: ACTION_LABELS.completeFocus,
       nowSeconds: completionSeconds,
-      shortBreakDurationSeconds: shortBreakPhaseDuration,
-      longBreakDurationSeconds: longBreakPhaseDuration,
+      shortBreakDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
+      longBreakDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.longBreakPhaseSeconds,
     });
 
     expect(nextState.timerSession.phase).toBe("longBreak");
     expect(nextState.timerSession.timerDurationSeconds).toBe(
-      longBreakPhaseDuration,
+      SETTINGS_DURATIONS.defaultDurations.longBreakPhaseSeconds,
     );
   });
 
   it("tracks the current break segment before extending it", () => {
     const state = createRunningState({
       phase: "shortBreak",
-      durationSeconds: shortBreakPhaseDuration,
+      durationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
     });
     const nextState = reducer(state, {
       type: ACTION_LABELS.extendBreak,
@@ -241,7 +247,8 @@ describe("pomodoro reducer", () => {
 
     expect(nextState.trackingHistory[dateKey].breakSeconds).toBe(passedSeconds);
     expect(nextState.timerSession.timerDurationSeconds).toBe(
-      shortBreakPhaseDuration + breakExtensionDuration,
+      SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds +
+        SETTINGS_DURATIONS.defaultDurations.breakExtensionSeconds,
     );
     expect(nextState.timerSession.accumulatedActiveSeconds).toBe(passedSeconds);
     expect(nextState.timerSession.startedAtSeconds).toBe(nowSeconds);
@@ -250,7 +257,9 @@ describe("pomodoro reducer", () => {
   it("does not extend a break more than once", () => {
     const state = createRunningState({
       phase: "shortBreak",
-      durationSeconds: shortBreakPhaseDuration + breakExtensionDuration,
+      durationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds +
+        SETTINGS_DURATIONS.defaultDurations.breakExtensionSeconds,
     });
     state.timerSession.breakExtended = true;
 
@@ -265,7 +274,8 @@ describe("pomodoro reducer", () => {
   it("ends a running break and tracks its current segment", () => {
     const state = createRunningState({
       phase: "shortBreak",
-      durationSeconds: shortBreakPhaseDuration,
+      durationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
     });
     const nextState = reducer(state, {
       type: ACTION_LABELS.endBreak,
@@ -281,7 +291,8 @@ describe("pomodoro reducer", () => {
     const nextState = reducer(state, {
       type: ACTION_LABELS.endSession,
       nowSeconds,
-      focusDurationSeconds: focusPhaseDuration,
+      focusDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
     });
 
     expect(nextState.trackingHistory[dateKey].focusSeconds).toBe(passedSeconds);
@@ -299,14 +310,16 @@ describe("pomodoro reducer", () => {
         phase: "shortBreak",
         status: "completed",
         sessionActive: true,
-        accumulatedActiveSeconds: shortBreakPhaseDuration,
+        accumulatedActiveSeconds:
+          SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
       },
       trackingHistory: {
         [dateKey]: {
           dateKey,
           completedRounds: 1,
-          focusSeconds: focusPhaseDuration,
-          breakSeconds: shortBreakPhaseDuration,
+          focusSeconds: SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
+          breakSeconds:
+            SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
           updatedAtSeconds: nowSeconds,
         },
       },
@@ -314,7 +327,8 @@ describe("pomodoro reducer", () => {
     const nextState = reducer(completedState, {
       type: ACTION_LABELS.endSession,
       nowSeconds,
-      focusDurationSeconds: focusPhaseDuration,
+      focusDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
     });
 
     expect(nextState.trackingHistory).toEqual(completedState.trackingHistory);
@@ -352,11 +366,12 @@ describe("pomodoro reducer", () => {
     const nextState = reducer(state, {
       type: ACTION_LABELS.endSession,
       nowSeconds: muchLater,
-      focusDurationSeconds: focusPhaseDuration,
+      focusDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
     });
 
     expect(nextState.trackingHistory[muchLaterDateKey].focusSeconds).toBe(
-      focusPhaseDuration,
+      SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
     );
   });
 

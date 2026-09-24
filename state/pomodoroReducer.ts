@@ -1,4 +1,4 @@
-import { breakExtensionDuration } from "@/constants/timer.constants";
+import { SETTINGS_DURATIONS } from "@/constants/settings.constants";
 import {
   DEFAULT_TIMER_SESSION,
   PomodoroState,
@@ -160,7 +160,8 @@ export function reducer(
       }
 
       const newDuration =
-        state.timerSession.timerDurationSeconds + breakExtensionDuration;
+        state.timerSession.timerDurationSeconds +
+        SETTINGS_DURATIONS.defaultDurations.breakExtensionSeconds;
 
       if (state.timerSession.status === "running") {
         if (state.timerSession.startedAtSeconds === null) return state;

@@ -11,11 +11,14 @@ export const useTimerNotificationSync = (timerSession: TimerSession) => {
   useEffect(() => {
     const syncNotification = async () => {
       try {
+        // Further validation is handled by the scheduleTimerCompletion,
+        // need to check if endsAtSeconds isnt null for TS
         if (status === "running" && endsAtSeconds !== null) {
           await scheduleTimerCompletionNotification(endsAtSeconds, phase);
           return;
         }
 
+        // Cancel notifications if the timer status isnt running
         await cancelTimerCompletionNotification();
       } catch (error) {
         console.error("Timer notification sync failed: ", error);
@@ -24,7 +27,4 @@ export const useTimerNotificationSync = (timerSession: TimerSession) => {
 
     void syncNotification();
   }, [status, phase, endsAtSeconds]);
-
-  // endsAt seconds validation are handled by the notif observer
-  // return functions to schedule and clean notifs?
 };

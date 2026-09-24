@@ -1,11 +1,7 @@
 import CurrentGoalSection from "@/components/FocusGoal/CurrentGoalSection";
 import AnimatedPressable from "@/components/ui/AnimatedPressable";
 import ScreenHeader from "@/components/ui/ScreenHeader";
-import {
-  MAX_DAILY_GOAL_MINUTES,
-  MIN_DAILY_GOAL_MINUTES,
-  QUICK_GOAL_PRESETS_SECONDS,
-} from "@/constants/goal.constants";
+import { GOAL_DURATIONS } from "@/constants/goal.constants";
 import { layout, theme } from "@/constants/theme";
 import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
@@ -44,8 +40,8 @@ export default function MyGoalScreen() {
 
   const isCustomGoalValid =
     number.length > 0 &&
-    customMinutes >= MIN_DAILY_GOAL_MINUTES &&
-    customMinutes <= MAX_DAILY_GOAL_MINUTES;
+    customMinutes >= GOAL_DURATIONS.minSeconds &&
+    customMinutes <= GOAL_DURATIONS.maxSeconds;
 
   const handleSetCustomGoal = () => {
     if (!isCustomGoalValid) return;
@@ -80,7 +76,7 @@ export default function MyGoalScreen() {
             <View style={styles.verticalContainer}>
               <Text style={styles.sectionCaption}>QUICK PRESETS</Text>
               <View style={styles.quickPresetsGrid}>
-                {QUICK_GOAL_PRESETS_SECONDS.map((presetSeconds) => {
+                {GOAL_DURATIONS.goalPresetsSeconds.map((presetSeconds) => {
                   const isSelected = presetSeconds === dailyGoalSeconds;
 
                   const presetMinutes = Math.floor(presetSeconds / 60);

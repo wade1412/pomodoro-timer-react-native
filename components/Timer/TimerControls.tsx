@@ -1,5 +1,5 @@
+import { SETTINGS_DURATIONS } from "@/constants/settings.constants";
 import { theme } from "@/constants/theme";
-import { breakExtensionDuration } from "@/constants/timer.constants";
 import { TimerPhase, TimerSession } from "@/constants/types";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -113,7 +113,7 @@ function OptionalControls({
         {/* Add Break Time Button */}
         {phase !== "focus" && (
           <AnimatedPressable
-            accessibilityLabel={`Add ${breakExtensionDuration / 60} minutes to break`}
+            accessibilityLabel={`Add ${SETTINGS_DURATIONS.defaultDurations.breakExtensionSeconds / 60} minutes to break`}
             accessibilityRole="button"
             accessibilityState={{ disabled: breakExtended }}
             disabled={breakExtended}
@@ -136,7 +136,7 @@ function OptionalControls({
                   pressed && { color: colors.breakPressed },
                   breakExtended && { color: colors.breakPressed },
                 ]}
-              >{`+${breakExtensionDuration / 60} min`}</Text>
+              >{`+${SETTINGS_DURATIONS.defaultDurations.breakExtensionSeconds / 60} min`}</Text>
             )}
           </AnimatedPressable>
         )}

@@ -1,8 +1,4 @@
-import {
-  DEFAULT_FOCUS_DURATION_SECONDS,
-  DEFAULT_LONG_BREAK_DURATION_SECONDS,
-  DEFAULT_SHORT_BREAK_DURATION_SECONDS,
-} from "@/constants/settings.constants";
+import { SETTINGS_DURATIONS } from "@/constants/settings.constants";
 import {
   migrateAppSettings,
   validateFocusDurationSeconds,
@@ -32,9 +28,12 @@ describe("app settings helpers", () => {
     expect(migrated).toEqual({
       ...DEFAULT_APP_SETTINGS,
       dailyGoalSeconds: 120 * 60,
-      focusDurationSeconds: DEFAULT_FOCUS_DURATION_SECONDS,
-      shortBreakDurationSeconds: DEFAULT_SHORT_BREAK_DURATION_SECONDS,
-      longBreakDurationSeconds: DEFAULT_LONG_BREAK_DURATION_SECONDS,
+      focusDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
+      shortBreakDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
+      longBreakDurationSeconds:
+        SETTINGS_DURATIONS.defaultDurations.longBreakPhaseSeconds,
     });
   });
 

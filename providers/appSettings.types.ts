@@ -1,9 +1,5 @@
-import { DEFAULT_DAILY_GOAL_SECONDS } from "@/constants/goal.constants";
-import {
-  DEFAULT_FOCUS_DURATION_SECONDS,
-  DEFAULT_LONG_BREAK_DURATION_SECONDS,
-  DEFAULT_SHORT_BREAK_DURATION_SECONDS,
-} from "@/constants/settings.constants";
+import { GOAL_DURATIONS } from "@/constants/goal.constants";
+import { SETTINGS_DURATIONS } from "@/constants/settings.constants";
 
 export type AppSettings = {
   dailyGoalSeconds: number;
@@ -24,8 +20,10 @@ export type AppSettingsContextValue = {
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  dailyGoalSeconds: DEFAULT_DAILY_GOAL_SECONDS,
-  focusDurationSeconds: DEFAULT_FOCUS_DURATION_SECONDS,
-  shortBreakDurationSeconds: DEFAULT_SHORT_BREAK_DURATION_SECONDS,
-  longBreakDurationSeconds: DEFAULT_LONG_BREAK_DURATION_SECONDS,
+  dailyGoalSeconds: GOAL_DURATIONS.defailtGoalSeconds,
+  focusDurationSeconds: SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
+  shortBreakDurationSeconds:
+    SETTINGS_DURATIONS.defaultDurations.shortBreakPhaseSeconds,
+  longBreakDurationSeconds:
+    SETTINGS_DURATIONS.defaultDurations.longBreakPhaseSeconds,
 };

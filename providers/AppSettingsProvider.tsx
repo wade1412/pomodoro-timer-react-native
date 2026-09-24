@@ -9,11 +9,11 @@ import {
 } from "react";
 import { StyleSheet, View } from "react-native";
 import {
+  migrateAppSettings,
   validateAppSettings,
   validateDailyGoalSeconds,
   validateFocusDurationSeconds,
   validateLongBreakDurationSeconds,
-  migrateAppSettings,
   validateShortBreakDurationSeconds,
 } from "./appSettings.helpers";
 import {

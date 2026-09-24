@@ -1,4 +1,4 @@
-import { focusPhaseDuration } from "./timer.constants";
+import { SETTINGS_DURATIONS } from "./settings.constants";
 
 export type TimerPhase = "focus" | "shortBreak" | "longBreak";
 
@@ -43,7 +43,7 @@ export const DEFAULT_TIMER_SESSION: TimerSession = {
   currentRoundNumber: 0,
   phase: "focus",
   status: "ready",
-  timerDurationSeconds: focusPhaseDuration,
+  timerDurationSeconds: SETTINGS_DURATIONS.defaultDurations.focusPhaseSeconds,
   accumulatedActiveSeconds: 0,
   breakExtended: false,
   sessionActive: false,
