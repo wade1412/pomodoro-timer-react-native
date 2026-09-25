@@ -65,6 +65,10 @@ export function reducer(
       return { ...state, trackingHistory: action.trackingHistory };
     }
 
+    case ACTION_LABELS.reconcileTimerSessionToSettings: {
+      return { ...state, timerSession: action.timerSession };
+    }
+
     case ACTION_LABELS.startOrResumePhase: {
       if (
         !validateTimerStatus(state.timerSession) ||

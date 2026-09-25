@@ -9,6 +9,7 @@ import {
 export const ACTION_LABELS = {
   hydratePomodoroState: "HYDRATE_POMODORO_STATE",
   hydrateTrackingHistory: "HYDRATE_TRACKING_HISTORY",
+  reconcileTimerSessionToSettings: "RECONCILE_TIMER_SESSION_TO_SETTINGS",
   startOrResumePhase: "START_OR_RESUME_PHASE",
   pausePhase: "PAUSE_PHASE",
   completeFocus: "FOCUS_COMPLETE",
@@ -29,6 +30,10 @@ export type ReducerAction =
   | {
       type: typeof ACTION_LABELS.hydrateTrackingHistory;
       trackingHistory: TrackingHistory;
+    }
+  | {
+      type: typeof ACTION_LABELS.reconcileTimerSessionToSettings;
+      timerSession: TimerSession;
     }
   | {
       type: typeof ACTION_LABELS.startOrResumePhase;
@@ -86,7 +91,7 @@ const reducerActionsAllowedValuesMap: Map<
   [
     ACTION_LABELS.completeFocus,
     {
-      allowedStatuses: ["running"],
+      allowedStatuses: ["running", "paused"],
       allowedPhases: ["focus"],
     },
   ],

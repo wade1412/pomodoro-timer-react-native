@@ -1,19 +1,19 @@
+import { SETTINGS_DURATIONS } from "@/constants/settings.constants";
 import {
   POMODORO_STATE_STORAGE_KEY,
   POMODORO_TRACKING_STORAGE_KEY,
 } from "@/constants/storage.constants";
 import { theme } from "@/constants/theme";
-import {
-  POMODORO_INITIAL_STATE,
-  PomodoroState,
-} from "@/constants/types";
-import { reducer } from "@/state/pomodoroReducer";
+import { POMODORO_INITIAL_STATE, PomodoroState } from "@/constants/types";
+import { getNowSeconds } from "@/hooks/useNowSeconds";
 import {
   createPersistedPomodoroState,
   parsePersistedPomodoroState,
 } from "@/state/pomodoro.persistence";
+import { reducer } from "@/state/pomodoroReducer";
 import { ACTION_LABELS, ReducerAction } from "@/state/reducer.helpers";
 import { validateTrackingHistory } from "@/state/tracking.validation";
+import { getEffectiveElapsedSeconds } from "@/utils/timer";
 import {
   ActionDispatch,
   createContext,
@@ -39,7 +39,11 @@ const PomodoroContext = createContext<PomodoroContextValue | undefined>(
 );
 
 export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
-  const { focusDurationSeconds } = useAppSettings();
+  const {
+    focusDurationSeconds,
+    shortBreakDurationSeconds,
+    longBreakDurationSeconds,
+  } = useAppSettings();
   const [state, dispatch] = useReducer(
     reducer,
     POMODORO_INITIAL_STATE,
@@ -53,6 +57,7 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   );
   const [isHydrated, setIsHydrated] = useState(false);
 
+  // Load saved state from AsyncStorage on app load
   useEffect(() => {
     const loadPomodoroState = async () => {
       try {
@@ -85,14 +90,93 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     loadPomodoroState();
   }, []);
 
+  // Save data on state change, after it was hydrated
   useEffect(() => {
     if (!isHydrated) return;
 
-    storeData(
-      POMODORO_STATE_STORAGE_KEY,
-      createPersistedPomodoroState(state),
-    );
+    storeData(POMODORO_STATE_STORAGE_KEY, createPersistedPomodoroState(state));
   }, [state, isHydrated]);
+
+  const { timerSession } = state;
+
+  // Reconcile timer duration to the set settings on settings change
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const isFocusPhase = timerSession.phase === "focus";
+
+    const baseDuration = isFocusPhase
+      ? focusDurationSeconds
+      : timerSession.phase === "shortBreak"
+        ? shortBreakDurationSeconds
+        : longBreakDurationSeconds;
+
+    // Add break extension duration to the new timer duration if it was already extended
+    const newTimerDuration = timerSession.breakExtended
+      ? baseDuration + SETTINGS_DURATIONS.defaultDurations.breakExtensionSeconds
+      : baseDuration;
+
+    // Return early if duration did not change
+    if (newTimerDuration === timerSession.timerDurationSeconds) {
+      return;
+    }
+
+    // For running or paused timer: check if the new timer duration has been already reached or not
+    if (timerSession.status === "running" || timerSession.status === "paused") {
+      // Complete phase if elapsed seconds exceed new timer duration
+      // - for cases where user had 20 minutes in the timer phase, but
+      // changed the phase duration to 15 min
+      const nowSeconds = getNowSeconds();
+      const elapsedSeconds = getEffectiveElapsedSeconds(
+        timerSession,
+        nowSeconds,
+      );
+
+      if (elapsedSeconds >= newTimerDuration) {
+        if (isFocusPhase) {
+          dispatch({
+            type: ACTION_LABELS.completeFocus,
+            nowSeconds,
+            shortBreakDurationSeconds,
+            longBreakDurationSeconds,
+          });
+        } else {
+          dispatch({
+            type: ACTION_LABELS.endBreak,
+            nowSeconds: nowSeconds,
+          });
+        }
+        return;
+      }
+
+      // Update endsAtSeconds with newTimerDuration if running and null if paused
+      return dispatch({
+        type: ACTION_LABELS.reconcileTimerSessionToSettings,
+        timerSession: {
+          ...timerSession,
+          timerDurationSeconds: newTimerDuration,
+          endsAtSeconds:
+            timerSession.status === "running"
+              ? nowSeconds + newTimerDuration - elapsedSeconds
+              : null,
+        },
+      });
+    }
+
+    return dispatch({
+      type: ACTION_LABELS.reconcileTimerSessionToSettings,
+      timerSession: {
+        ...timerSession,
+        timerDurationSeconds: newTimerDuration,
+      },
+    });
+  }, [
+    isHydrated,
+    focusDurationSeconds,
+    shortBreakDurationSeconds,
+    longBreakDurationSeconds,
+    timerSession,
+  ]);
 
   if (!isHydrated) return <View style={styles.container} />;
 
