@@ -39,7 +39,8 @@
         }
       ],
       "expo-web-browser",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true
