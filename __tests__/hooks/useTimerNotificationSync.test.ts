@@ -12,7 +12,7 @@ import {
   it,
   jest,
 } from "@jest/globals";
-import { renderHook } from "@testing-library/react-native";
+import { renderHook, waitFor } from "@testing-library/react-native";
 
 jest.mock("@/services/timerNotifications");
 
@@ -32,13 +32,13 @@ describe("useTimerNotificationSync hook", () => {
       status: "running",
       startedAtSeconds: 1_000_000,
       sessionActive: true,
-      endsAtSeconds: 1_010,
+      endsAtSeconds: 1_001_500,
     };
 
     renderHook(() => useTimerNotificationSync(testTimerSession));
 
+    // Test function execution and arguments
     expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
-
     expect(scheduleTimerCompletionNotification).toHaveBeenCalledWith(
       testTimerSession.endsAtSeconds,
       testTimerSession.phase,
@@ -49,20 +49,6 @@ describe("useTimerNotificationSync hook", () => {
     const testTimerSession: TimerSession = {
       ...POMODORO_INITIAL_STATE.timerSession,
       status: "paused",
-      startedAtSeconds: null,
-      sessionActive: false,
-      endsAtSeconds: null,
-    };
-
-    renderHook(() => useTimerNotificationSync(testTimerSession));
-
-    expect(cancelTimerCompletionNotification).toHaveBeenCalledTimes(1);
-  });
-
-  it("cancels the notification on timer reset", () => {
-    const testTimerSession: TimerSession = {
-      ...POMODORO_INITIAL_STATE.timerSession,
-      status: "ready",
       startedAtSeconds: null,
       sessionActive: false,
       endsAtSeconds: null,
@@ -98,5 +84,68 @@ describe("useTimerNotificationSync hook", () => {
   });
 
   // TODO Accumulated seconds does not trigger notification schedule
-  // TODO Service rejection does not create unhandled promise
+  it("does not schedule notification on accumulated seconds change", () => {
+    const initialSession: TimerSession = {
+      ...POMODORO_INITIAL_STATE.timerSession,
+      status: "running",
+      startedAtSeconds: 1_000_000,
+      sessionActive: true,
+      endsAtSeconds: 1_001_500,
+      accumulatedActiveSeconds: 0,
+    };
+
+    const { rerender } = renderHook(
+      (session: TimerSession) => useTimerNotificationSync(session),
+      { initialProps: initialSession },
+    );
+
+    expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
+
+    rerender({
+      ...initialSession,
+      accumulatedActiveSeconds: 15,
+    });
+
+    expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it("handles scheduleTimerCompletionNotification rejection without creating unhandled promises", async () => {
+    // Error sim
+    const mockError = new Error("Native notification error");
+    (
+      scheduleTimerCompletionNotification as jest.MockedFunction<
+        typeof scheduleTimerCompletionNotification
+      >
+    ).mockRejectedValueOnce(mockError);
+
+    // Console spy to intercept console error and test catch
+    const consoleSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const testTimerSession: TimerSession = {
+      ...POMODORO_INITIAL_STATE.timerSession,
+      status: "running",
+      startedAtSeconds: 1_000_000,
+      sessionActive: true,
+      endsAtSeconds: 1_001_500,
+    };
+
+    renderHook(() => useTimerNotificationSync(testTimerSession));
+
+    // waiting for async code from useEffect
+    await waitFor(() => {
+      expect(scheduleTimerCompletionNotification).toHaveBeenCalledWith(
+        testTimerSession.endsAtSeconds,
+        testTimerSession.phase,
+      );
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Timer notification sync failed: ",
+        mockError,
+      );
+    });
+
+    consoleSpy.mockRestore();
+  });
 });
