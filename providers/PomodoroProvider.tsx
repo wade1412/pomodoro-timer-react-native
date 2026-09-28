@@ -39,11 +39,14 @@ const PomodoroContext = createContext<PomodoroContextValue | undefined>(
 );
 
 export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
+  // ------- Context and States --------
+  // Get phases duration from app settings context
   const {
     focusDurationSeconds,
     shortBreakDurationSeconds,
     longBreakDurationSeconds,
   } = useAppSettings();
+  // Initialize state and dispatch from reducer
   const [state, dispatch] = useReducer(
     reducer,
     POMODORO_INITIAL_STATE,
@@ -55,17 +58,22 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
       },
     }),
   );
+
+  // Hydration state for syncing settings from storage
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load saved state from AsyncStorage on app load
+  // ------- Storage Handlers --------
+  // Load saved data from AsyncStorage on component render
   useEffect(() => {
     const loadPomodoroState = async () => {
       try {
+        // Await from async storage
         const [storedPomodoroState, legacyStoredTracking] = await Promise.all([
           getStorageByKey(POMODORO_STATE_STORAGE_KEY),
           getStorageByKey(POMODORO_TRACKING_STORAGE_KEY),
         ]);
 
+        // Validation and parsing
         const persistedState = parsePersistedPomodoroState(storedPomodoroState);
 
         if (persistedState) {
@@ -82,6 +90,8 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
           type: ACTION_LABELS.hydrateTrackingHistory,
           trackingHistory: legacyStoredTracking,
         });
+      } catch (error) {
+        console.log(error);
       } finally {
         setIsHydrated(true);
       }
@@ -97,9 +107,9 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     storeData(POMODORO_STATE_STORAGE_KEY, createPersistedPomodoroState(state));
   }, [state, isHydrated]);
 
-  const { timerSession } = state;
-
+  // ------- Reconciliation Handler --------
   // Reconcile timer duration to the set settings on settings change
+  const { timerSession } = state;
   useEffect(() => {
     if (!isHydrated) return;
 
