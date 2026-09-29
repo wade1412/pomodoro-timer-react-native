@@ -17,19 +17,22 @@ const calendarMaxWidth = 424;
 
 interface CalendarDayPickerProps {
   todayDateKey: DateKey;
-  dateInfo: DateInfo;
+  selectedDateInfo: DateInfo;
   trackingHistory: TrackingHistory;
   dailyGoalSeconds: number;
 }
 
 export default function CalendarDayPicker({
   todayDateKey,
-  dateInfo,
+  selectedDateInfo,
   trackingHistory,
   dailyGoalSeconds,
 }: CalendarDayPickerProps) {
   const router = useRouter();
-  const calendarGrid = createMonthGrid(dateInfo.year, dateInfo.month);
+  const calendarGrid = createMonthGrid(
+    selectedDateInfo.year,
+    selectedDateInfo.month,
+  );
   const calendarRows = Object.keys(calendarGrid);
 
   return (
@@ -48,27 +51,31 @@ export default function CalendarDayPicker({
             {calendarGrid[row].map((day, index) => {
               const backgroundColor = getCalendarCellBackgroundColor(
                 day,
-                dateInfo,
+                selectedDateInfo,
                 trackingHistory,
                 dailyGoalSeconds,
               );
               const isEmptyDay = day.trim() === "";
               const isToday =
                 getDateKeyFromDay(
-                  dateInfo.year,
-                  dateInfo.month,
+                  selectedDateInfo.year,
+                  selectedDateInfo.month,
                   Number(day),
                 ) === todayDateKey;
               const dateKey = isEmptyDay
                 ? null
-                : getDateKeyFromDay(dateInfo.year, dateInfo.month, Number(day));
+                : getDateKeyFromDay(
+                    selectedDateInfo.year,
+                    selectedDateInfo.month,
+                    Number(day),
+                  );
               const hasDetails = dateKey
                 ? Boolean(trackingHistory[dateKey])
                 : false;
               const accessibilityLabel = dateKey
                 ? new Date(
-                    dateInfo.year,
-                    dateInfo.month,
+                    selectedDateInfo.year,
+                    selectedDateInfo.month,
                     Number(day),
                   ).toLocaleDateString("en-US", {
                     weekday: "long",

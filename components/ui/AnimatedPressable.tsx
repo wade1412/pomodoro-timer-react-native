@@ -1,10 +1,8 @@
-import { useEffect } from "react";
+import { type ComponentProps, useEffect } from "react";
 import {
   GestureResponderEvent,
   Pressable,
   PressableProps,
-  StyleProp,
-  ViewStyle,
 } from "react-native";
 import Animated, {
   cancelAnimation,
@@ -17,7 +15,7 @@ import Animated, {
 
 interface AnimatedPressableProps extends Omit<PressableProps, "style"> {
   style?: PressableProps["style"];
-  containerStyle?: StyleProp<ViewStyle>;
+  containerStyle?: ComponentProps<typeof Animated.View>["style"];
 }
 
 export default function AnimatedPressable({

@@ -9,3 +9,8 @@ export type MonthlyTracking = {
   monthRoundsCompleted: number;
   monthActiveDays: number;
 };
+
+export type TimePeriod = {
+  year: number;
+  month: number;
+};

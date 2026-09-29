@@ -2,7 +2,9 @@ import {
   getDateInfo,
   getMonthlyTracking,
 } from "@/components/Calendar/calendar.helpers";
+import { TimePeriod } from "@/components/Calendar/calendar.types";
 import CalendarDayPicker from "@/components/Calendar/CalendarDayPicker";
+import CalendarMonthPicker from "@/components/Calendar/CalendarMonthPicker";
 import MonthSummary from "@/components/Calendar/MonthSummary";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { layout, theme } from "@/constants/theme";
@@ -11,6 +13,7 @@ import { useAppSettings } from "@/providers/AppSettingsProvider";
 import { usePomodoroContext } from "@/providers/PomodoroProvider";
 import { getLocalDateKey } from "@/state/tracking.helpers";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
+import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -32,14 +35,61 @@ export default function CalendarScreen() {
 
   const todayDateInfo = getDateInfo(new Date(nowSeconds * 1000));
   const todayDateKey = getLocalDateKey(nowSeconds);
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>({
+    year: todayDateInfo.year,
+    month: todayDateInfo.month,
+  });
 
-  const tabBarHeight = useBottomTabBarHeight();
+  const selectedPeriodDateInfo = getDateInfo(
+    new Date(selectedPeriod.year, selectedPeriod.month, 1),
+  );
+
+  const onPrevMonthPress = () =>
+    setSelectedPeriod((prev) => {
+      let newYear = prev.year;
+      let newMonth = prev.month - 1;
+      if (newMonth < 0) {
+        return {
+          year: newYear - 1,
+          month: 11,
+        };
+      }
+      return {
+        year: newYear,
+        month: newMonth,
+      };
+    });
+
+  const onNextMonthPress = () =>
+    setSelectedPeriod((prev) => {
+      let newYear = prev.year;
+      let newMonth = prev.month + 1;
+      if (newMonth > 11) {
+        return {
+          year: newYear + 1,
+          month: 0,
+        };
+      }
+
+      return {
+        year: newYear,
+        month: newMonth,
+      };
+    });
+
+  const onReturnToCurrentMonthPress = () =>
+    setSelectedPeriod({
+      year: todayDateInfo.year,
+      month: todayDateInfo.month,
+    });
 
   const monthlyTracking = getMonthlyTracking(
     trackingHistory,
-    todayDateInfo.year,
-    todayDateInfo.month,
+    selectedPeriod.year,
+    selectedPeriod.month,
   );
+
+  const tabBarHeight = useBottomTabBarHeight();
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={screen}>
@@ -51,25 +101,38 @@ export default function CalendarScreen() {
       >
         <View style={contentColumn}>
           <View style={styles.headerSection}>
-            <ScreenHeader title="Calendar" subtitle={todayDateInfo.label} />
+            <ScreenHeader title="Calendar" />
 
-            <View style={styles.calendarHintContainer}>
-              <Text style={styles.calendarHintText}>LESS</Text>
+            <View style={styles.hintAndMonthPickerContainer}>
+              <View style={styles.calendarHintContainer}>
+                <Text style={styles.calendarHintText}>LESS</Text>
 
-              {goalHintArray.map((color) => (
-                <View
-                  key={color}
-                  style={[styles.calendarHintColor, { backgroundColor: color }]}
-                ></View>
-              ))}
+                {goalHintArray.map((color) => (
+                  <View
+                    key={color}
+                    style={[
+                      styles.calendarHintColor,
+                      { backgroundColor: color },
+                    ]}
+                  ></View>
+                ))}
 
-              <Text style={styles.calendarHintText}>MORE</Text>
+                <Text style={styles.calendarHintText}>MORE</Text>
+              </View>
+
+              <CalendarMonthPicker
+                selectedPeriodDateInfo={selectedPeriodDateInfo}
+                todayDateInfo={todayDateInfo}
+                onPreviousPress={onPrevMonthPress}
+                onNextPress={onNextMonthPress}
+                onReturnPress={onReturnToCurrentMonthPress}
+              />
             </View>
           </View>
 
           <CalendarDayPicker
             todayDateKey={todayDateKey}
-            dateInfo={todayDateInfo}
+            selectedDateInfo={selectedPeriodDateInfo}
             dailyGoalSeconds={dailyGoalSeconds}
             trackingHistory={trackingHistory}
           />
@@ -92,8 +155,12 @@ const styles = StyleSheet.create({
   headerSection: {
     gap: spacing.xs,
   },
-  calendarHintContainer: {
+  hintAndMonthPickerContainer: {
     width: "100%",
+    gap: spacing.md,
+  },
+  calendarHintContainer: {
+    flex: 1,
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "flex-start",
