@@ -8,7 +8,11 @@ export default function TimerLifecycleController() {
   const { state, dispatch } = usePomodoroContext();
   const { shortBreakDurationSeconds, longBreakDurationSeconds } =
     useAppSettings();
-  const { nowSeconds } = useNowSeconds();
+
+  const refreshIntervalMs =
+    state.timerSession.status === "running" ? 1_000 : 30_000;
+
+  const { nowSeconds } = useNowSeconds(refreshIntervalMs);
 
   useEffect(() => {
     if (
