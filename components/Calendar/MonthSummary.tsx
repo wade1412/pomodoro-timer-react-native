@@ -15,7 +15,7 @@ export default function MonthSummary({ monthlyTracking }: MonthSummaryProps) {
 
   return (
     <View style={styles.monthSummary}>
-      <Text style={styles.summaryTitle}>THIS MONTH</Text>
+      <Text style={styles.summaryTitle}>MONTH SUMMARY</Text>
       <View style={styles.trackingContainer}>
         <View style={styles.trackingCell}>
           <Text style={styles.trackingFocusNumber}>{focusMinutes}</Text>

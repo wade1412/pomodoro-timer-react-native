@@ -11,7 +11,6 @@ import { ACTION_LABELS } from "@/state/reducer.helpers";
 import { getLocalDateKey } from "@/state/tracking.helpers";
 import { getEffectiveElapsedSeconds } from "@/utils/timer";
 import { useBottomTabBarHeight } from "expo-router/js-tabs";
-import { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,35 +36,6 @@ export default function FocusScreen() {
       return longBreakDurationSeconds;
     return shortBreakDurationSeconds;
   };
-
-  useEffect(() => {
-    if (
-      state.timerSession.status !== "running" ||
-      !state.timerSession.endsAtSeconds
-    )
-      return;
-
-    if (nowSeconds >= state.timerSession.endsAtSeconds) {
-      if (state.timerSession.phase === "focus") {
-        dispatch({
-          type: ACTION_LABELS.completeFocus,
-          nowSeconds,
-          shortBreakDurationSeconds,
-          longBreakDurationSeconds,
-        });
-      } else {
-        dispatch({ type: ACTION_LABELS.endBreak, nowSeconds });
-      }
-    }
-  }, [
-    state.timerSession.status,
-    state.timerSession.endsAtSeconds,
-    state.timerSession.phase,
-    nowSeconds,
-    shortBreakDurationSeconds,
-    longBreakDurationSeconds,
-    dispatch,
-  ]);
 
   const formattedDate = new Date(nowSeconds * 1000).toLocaleDateString(
     "en-US",

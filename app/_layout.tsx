@@ -1,3 +1,4 @@
+import TimerLifecycleController from "@/components/TimerLifecycleController";
 import TimerNotificationController from "@/components/TimerNotificationController";
 import { theme } from "@/constants/theme";
 import { AppSettingsProvider } from "@/providers/AppSettingsProvider";
@@ -66,6 +67,7 @@ function RootLayoutNav() {
       <AppSettingsProvider>
         <PomodoroProvider>
           <TimerNotificationController />
+          <TimerLifecycleController />
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />
