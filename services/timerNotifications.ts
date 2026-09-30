@@ -6,19 +6,14 @@ import { Platform } from "react-native";
 const TIMER_COMPLETION_NOTIFICATION_ID = "activeTimerCompletion";
 const MIN_SCHEDULING_LEAD_TIME_MS = 1_000;
 
-export const IDENTIFIERS = {
-  focusComplete: "focusComplete",
-  breakComplete: "breakComplete",
-  startBreak: "startBreak",
-  startNewRound: "startNewRound",
-  endSession: "endSession",
-  timerPhaseCompleted: "timerPhaseCompleted",
-};
+const TIMER_NOTIFICATION_CHANNEL_ID = "timer";
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
   if (Platform.OS === "web") {
     return false;
   }
+
+  await configureTimerNotificationChannel();
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
 
@@ -36,36 +31,17 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
   return true;
 };
 
-export const registerTimerNotificationCategories = async (): Promise<void> => {
-  if (Platform.OS === "web") {
-    return;
-  }
+export const configureTimerNotificationChannel = async () => {
+  if (Platform.OS !== "android") return;
 
-  await Notifications.setNotificationCategoryAsync(IDENTIFIERS.focusComplete, [
+  await Notifications.setNotificationChannelAsync(
+    TIMER_NOTIFICATION_CHANNEL_ID,
     {
-      identifier: IDENTIFIERS.startBreak,
-      buttonTitle: "Start break",
-      options: { opensAppToForeground: true },
+      name: "Timer alerts",
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: "default",
     },
-    {
-      identifier: IDENTIFIERS.endSession,
-      buttonTitle: "End session",
-      options: { opensAppToForeground: true },
-    },
-  ]);
-
-  await Notifications.setNotificationCategoryAsync(IDENTIFIERS.breakComplete, [
-    {
-      identifier: IDENTIFIERS.startNewRound,
-      buttonTitle: "Start new focus round",
-      options: { opensAppToForeground: true },
-    },
-    {
-      identifier: IDENTIFIERS.endSession,
-      buttonTitle: "End session",
-      options: { opensAppToForeground: true },
-    },
-  ]);
+  );
 };
 
 export const scheduleTimerCompletionNotification = async (
@@ -86,10 +62,6 @@ export const scheduleTimerCompletionNotification = async (
 
   const endingDate = new Date(endingTimeMs);
 
-  const categoryIdentifier =
-    timerPhase === "focus"
-      ? IDENTIFIERS.focusComplete
-      : IDENTIFIERS.breakComplete;
   const formattedPhase = timerPhase === "focus" ? "Focus" : "Break";
 
   await Notifications.scheduleNotificationAsync({
@@ -100,7 +72,6 @@ export const scheduleTimerCompletionNotification = async (
         timerPhase === "focus"
           ? "Time to take a break!"
           : "Ready for a new focus round?",
-      categoryIdentifier: categoryIdentifier,
       data: {
         type: "timerPhaseCompleted",
         completedPhase: timerPhase,
@@ -111,6 +82,9 @@ export const scheduleTimerCompletionNotification = async (
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: endingDate,
+      ...(Platform.OS === "android" && {
+        channelId: TIMER_NOTIFICATION_CHANNEL_ID,
+      }),
     },
   });
 
