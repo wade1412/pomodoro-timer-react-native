@@ -12,9 +12,42 @@ import {
   it,
   jest,
 } from "@jest/globals";
-import { renderHook, waitFor } from "@testing-library/react-native";
+import { act, renderHook, waitFor } from "@testing-library/react-native";
 
 jest.mock("@/services/timerNotifications");
+
+const mockSchedule = jest.mocked(scheduleTimerCompletionNotification);
+const mockCancel = jest.mocked(cancelTimerCompletionNotification);
+
+const createDeferred = <T>() => {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  return { promise, resolve, reject };
+};
+
+const runningSession: TimerSession = {
+  ...POMODORO_INITIAL_STATE.timerSession,
+  status: "running",
+  phase: "focus",
+  sessionActive: true,
+  startedAtSeconds: 1_000,
+  endsAtSeconds: 2_500,
+};
+
+const pausedSession: TimerSession = {
+  ...POMODORO_INITIAL_STATE.timerSession,
+  status: "paused",
+  phase: "focus",
+  sessionActive: false,
+  startedAtSeconds: null,
+  endsAtSeconds: null,
+};
 
 describe("useTimerNotificationSync hook", () => {
   beforeEach(() => {
@@ -26,41 +59,29 @@ describe("useTimerNotificationSync hook", () => {
     jest.restoreAllMocks();
   });
 
-  it("schedules the notification when timer is running with valid endsAtSeconds", () => {
-    const testTimerSession: TimerSession = {
-      ...POMODORO_INITIAL_STATE.timerSession,
-      status: "running",
-      startedAtSeconds: 1_000_000,
-      sessionActive: true,
-      endsAtSeconds: 1_001_500,
-    };
-
-    renderHook(() => useTimerNotificationSync(testTimerSession));
+  it("schedules the notification when timer is running with valid endsAtSeconds", async () => {
+    renderHook(() => useTimerNotificationSync(runningSession));
 
     // Test function execution and arguments
-    expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
-    expect(scheduleTimerCompletionNotification).toHaveBeenCalledWith(
-      testTimerSession.endsAtSeconds,
-      testTimerSession.phase,
-    );
+    await waitFor(() => {
+      expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
+      expect(scheduleTimerCompletionNotification).toHaveBeenCalledWith(
+        runningSession.endsAtSeconds,
+        runningSession.phase,
+      );
+    });
   });
 
-  it("cancels the notification on timer pause", () => {
-    const testTimerSession: TimerSession = {
-      ...POMODORO_INITIAL_STATE.timerSession,
-      status: "paused",
-      startedAtSeconds: null,
-      sessionActive: false,
-      endsAtSeconds: null,
-    };
+  it("cancels the notification on timer pause", async () => {
+    renderHook(() => useTimerNotificationSync(pausedSession));
 
-    renderHook(() => useTimerNotificationSync(testTimerSession));
-
-    expect(cancelTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(cancelTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it("cancels the notification on timer phase completion", () => {
-    const testTimerSession: TimerSession = {
+  it("cancels the notification on timer phase completion", async () => {
+    const completedTimerSession: TimerSession = {
       ...POMODORO_INITIAL_STATE.timerSession,
       status: "completed",
       startedAtSeconds: null,
@@ -68,23 +89,27 @@ describe("useTimerNotificationSync hook", () => {
       endsAtSeconds: null,
     };
 
-    renderHook(() => useTimerNotificationSync(testTimerSession));
+    renderHook(() => useTimerNotificationSync(completedTimerSession));
 
-    expect(cancelTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(cancelTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it("cancels the notification on timer status ready", () => {
-    const testTimerSession: TimerSession = {
+  it("cancels the notification on timer status ready", async () => {
+    const readyTimerSession: TimerSession = {
       ...POMODORO_INITIAL_STATE.timerSession,
     };
 
-    renderHook(() => useTimerNotificationSync(testTimerSession));
+    renderHook(() => useTimerNotificationSync(readyTimerSession));
 
-    expect(cancelTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(cancelTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    });
   });
 
   // TODO Accumulated seconds does not trigger notification schedule
-  it("does not schedule notification on accumulated seconds change", () => {
+  it("does not schedule notification on accumulated seconds change", async () => {
     const initialSession: TimerSession = {
       ...POMODORO_INITIAL_STATE.timerSession,
       status: "running",
@@ -99,14 +124,22 @@ describe("useTimerNotificationSync hook", () => {
       { initialProps: initialSession },
     );
 
-    expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     rerender({
       ...initialSession,
       accumulatedActiveSeconds: 15,
     });
 
-    expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(scheduleTimerCompletionNotification).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("handles scheduleTimerCompletionNotification rejection without creating unhandled promises", async () => {
@@ -144,6 +177,90 @@ describe("useTimerNotificationSync hook", () => {
         "Timer notification sync failed: ",
         mockError,
       );
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it("waits for pending schedule before canceling notification", async () => {
+    const pendingSchedule = createDeferred<boolean>();
+
+    mockSchedule.mockReturnValueOnce(pendingSchedule.promise);
+    mockCancel.mockResolvedValueOnce();
+
+    const runningSession: TimerSession = {
+      ...POMODORO_INITIAL_STATE.timerSession,
+      status: "running",
+      phase: "focus",
+      sessionActive: true,
+      startedAtSeconds: 1_000,
+      endsAtSeconds: 2_500,
+    };
+
+    const pausedSession: TimerSession = {
+      ...POMODORO_INITIAL_STATE.timerSession,
+      status: "paused",
+      phase: "focus",
+      sessionActive: false,
+      startedAtSeconds: null,
+      endsAtSeconds: null,
+    };
+
+    const { rerender } = renderHook(
+      (session: TimerSession) => useTimerNotificationSync(session),
+      {
+        initialProps: runningSession,
+      },
+    );
+
+    await waitFor(() => expect(mockSchedule).toHaveBeenCalledTimes(1));
+
+    rerender(pausedSession);
+
+    // Wait for effect and microtaskst to resolve
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Cancel should not be called untill the scheduling is done
+    expect(mockCancel).not.toHaveBeenCalled();
+
+    await act(async () => {
+      pendingSchedule.resolve(true);
+      await pendingSchedule.promise;
+    });
+
+    await waitFor(() => expect(mockCancel).toHaveBeenCalledTimes(1));
+  });
+
+  it("continues synchronization after a scheduling failure", async () => {
+    const mockError = new Error("Native scheduling failed");
+
+    mockSchedule.mockRejectedValueOnce(mockError);
+    mockCancel.mockResolvedValueOnce();
+
+    const consoleSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const { rerender } = renderHook(
+      (session: TimerSession) => useTimerNotificationSync(session),
+      {
+        initialProps: runningSession,
+      },
+    );
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Timer notification sync failed: ",
+        mockError,
+      );
+    });
+
+    rerender(pausedSession);
+
+    await waitFor(() => {
+      expect(mockCancel).toHaveBeenCalledTimes(1);
     });
 
     consoleSpy.mockRestore();
